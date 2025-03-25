@@ -76,6 +76,19 @@ public interface DockService {
 	 * @return
 	 */
 	BizDailyWorkPlan getDailyWorkPlan(BizDailyWorkPlanTemp algDailyWorkPlanTemp);
+	/**
+	 * 获取 （预）作业计划
+	 * @param algShipRealTime
+	 * @return
+	 */
+	BizShipWorkPlanTemp getShipWorkPlanTemp(BizShipRealTime algShipRealTime);
+
+	/**
+	 * 获取 作业计划
+	 * @param algShipWorkPlanTemp
+	 * @return
+	 */
+	BizShipWorkPlan getShipWorkPlan(BizShipWorkPlanTemp algShipWorkPlanTemp);
 
 	/**
 	 * 刷新在港船舶

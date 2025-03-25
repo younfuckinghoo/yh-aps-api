@@ -450,7 +450,49 @@ public class DockServiceImpl implements DockService {
         bizDailyWorkPlan.setCreator(UserUtils.getUser().getUserName());
         return bizDailyWorkPlan;
     }
+    @Override
+    public BizShipWorkPlanTemp getShipWorkPlanTemp(BizShipRealTime bizShipRealTime) {
+        BizShipWorkPlanTemp bizShipWorkPlanTemp = new BizShipWorkPlanTemp();
+//        bizDailyWorkPlanTemp.setId(sysIdService.getId("ALG_DAILY_WORK_PLAN_TEMP"));
+//        bizShipWorkPlanTemp.setShipRealTimeId(bizShipRealTime.getId());
+        bizShipWorkPlanTemp.setPlanTime(getPlanDate());
+        bizShipWorkPlanTemp.setVoyageNo(bizShipRealTime.getVoyageNo());
 
+
+        bizShipWorkPlanTemp.setPlanFinishTime(bizShipRealTime.getWorkingFinishTime());
+        bizShipWorkPlanTemp.setThroughputWeight(RandomUtil.randomInt(1000,5000) + "");
+        bizShipWorkPlanTemp.setRemainingWeight(RandomUtil.randomInt(1000,3000) + "");
+        bizShipWorkPlanTemp.setWorkContent("工作内容" + System.currentTimeMillis());
+//        bizShipWorkPlanTemp.setNightWorkAmount(RandomUtil.randomInt(1000,3000) + "");
+//        bizShipWorkPlanTemp.setNightMachine("夜班机械"+System.currentTimeMillis());
+//        bizShipWorkPlanTemp.setNightPerson("夜班人员"+System.currentTimeMillis());
+//        bizShipWorkPlanTemp.setDayWorkAmount(RandomUtil.randomInt(1000,3000) + "");
+//        bizShipWorkPlanTemp.setDayMachine("夜班机械"+System.currentTimeMillis());
+//        bizShipWorkPlanTemp.setDayPerson("夜班人员"+System.currentTimeMillis());
+//        bizShipWorkPlanTemp.setCreator(UserUtils.getUser().getUserName());
+//        bizShipWorkPlanTemp.setCreateDate(new Date());
+
+        return bizShipWorkPlanTemp;
+    }
+
+    @Override
+    public BizShipWorkPlan getShipWorkPlan(BizShipWorkPlanTemp bizShipWorkPlanTemp) {
+
+        BizShipWorkPlan bizShipWorkPlan = new BizShipWorkPlan();
+        Field[] fields =  ReflectUtil.getFields(BizShipWorkPlanTemp.class);
+        for(Field field : fields){
+            if("serialVersionUID".equals(field.getName())){
+                continue;
+            }
+            Object val = ReflectUtil.getFieldValue(bizShipWorkPlanTemp, field);
+            if(null != val){
+                ReflectUtil.setFieldValue(bizShipWorkPlan, field.getName(), val);
+            }
+        }
+//        bizDailyWorkPlan.setId(sysIdService.getId("ALG_DAILY_WORK_PLAN"));
+//        bizShipWorkPlan.setCreator(UserUtils.getUser().getUserName());
+        return bizShipWorkPlan;
+    }
     @Override
     @Transactional
     public void refreshRealTime() {
