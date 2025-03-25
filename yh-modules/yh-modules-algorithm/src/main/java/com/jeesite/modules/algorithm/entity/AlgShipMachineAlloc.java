@@ -60,5 +60,5 @@ public class AlgShipMachineAlloc implements Serializable {
      * 分配数量（同一类型机械数量）
      */
     @TableField("MACHINE_COUNT")
-    private Short machineCount;
+    private Integer machineCount;
 }

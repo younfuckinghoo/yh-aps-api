@@ -18,11 +18,11 @@ public class WorkPlanShipMachineAllocDO {
      * 开工时间
      * 取值 实际开工时间{@link AlgShipRealTime.workingStartTime} | 计划开工时间{@link AlgShipPlan.planStartTime}
      */
-    private LocalDateTime startTime;
+    private MutableLocalDateTime startTime;
     /**
      * 完工时间
      * 取值  实际完工时间{@link AlgShipRealTime.workingFinishTime} | 计划完工时间{@link AlgShipPlan.planFinishTime}
      */
-    private LocalDateTime endTime;
+    private MutableLocalDateTime endTime;
 
 }
