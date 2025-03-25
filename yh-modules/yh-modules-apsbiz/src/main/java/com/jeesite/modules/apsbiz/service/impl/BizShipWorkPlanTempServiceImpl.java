@@ -71,7 +71,7 @@ public class BizShipWorkPlanTempServiceImpl extends YhServiceImpl<BizShipWorkPla
             queryWrapper.and(wrapper -> wrapper
                     .in("B.ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
                     .or()
-                    .in("A.STAY_ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
+                    .in("A.ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
             );
         }
         // 泊位
@@ -107,7 +107,7 @@ public class BizShipWorkPlanTempServiceImpl extends YhServiceImpl<BizShipWorkPla
             queryWrapper.and(wrapper -> wrapper
                     .in("B.ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
                     .or()
-                    .in("A.STAY_ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
+                    .in("A.ALGORITHM_STATE", StrUtil.split(algShipWorkPlanTemp.getAlgorithmStateIn(), ","))
             );
         }
         // 泊位
