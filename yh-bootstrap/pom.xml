@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yh</groupId>
+    <artifactId>yh-bootstrap</artifactId>
+    <version>2.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>Winhai Bootstrap</name>
+    <url>http://winh-ai.com</url>
+    <inceptionYear>2023-Now</inceptionYear>
+
+    <modules>
+        <module>yh-bootstrap-web</module>
+        <module>yh-bootstrap-web-api</module>
+        <module>yh-bootstrap-fast</module>
+        <module>yh-bootstrap-mini</module>
+    </modules>
+
+    <developers>
+        <developer>
+            <id>winhai</id>
+            <name>WangZhen</name>
+            <email>winhai at 163.com</email>
+            <roles><role>Project lead</role></roles>
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
+
+    <organization>
+        <name>Winhai</name>
+        <url>http://winh-ai.com</url>
+    </organization>
+
+</project>
