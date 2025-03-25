@@ -84,14 +84,14 @@ public class WorkPlanMachinePool implements Cloneable {
             AlgShoreMachine algShoreMachine = workPlanShoreMachineDO.getAlgShoreMachine();
             WorkPlanShipMachineAllocDO workPlanShipMachineAllocDO = new WorkPlanShipMachineAllocDO();
             AlgShipMachineAlloc algShipMachineAlloc = new AlgShipMachineAlloc();
-            algShipMachineAlloc.setMachineCount((short) 1);
+            algShipMachineAlloc.setMachineCount(1);
             algShipMachineAlloc.setMachineId(algShoreMachine.getId());
             algShipMachineAlloc.setMachineName(algShoreMachine.getMachineName());
             algShipMachineAlloc.setMachineClassCode(MachineClassEnum.SHORE.getCode());
             algShipMachineAlloc.setVoyageNo(workPlanShipDO.getShipForecast().getVoyageNo());
             workPlanShipMachineAllocDO.setAlgShipMachineAlloc(algShipMachineAlloc);
-            workPlanShipMachineAllocDO.setStartTime(workPlanShipDO.getAlgShipPlan().getPlanStartTime());
-            workPlanShipMachineAllocDO.setEndTime(workPlanShipDO.getAlgShipPlan().getPlanFinishTime());
+            workPlanShipMachineAllocDO.setStartTime(new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanStartTime()));
+            workPlanShipMachineAllocDO.setEndTime(new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanFinishTime()));
             result.add(workPlanShipMachineAllocDO);
             workPlanShoreMachineDO.putSegmentOrderByPlanBerthTime(workPlanShipMachineAllocDO);
         }
@@ -110,8 +110,20 @@ public class WorkPlanMachinePool implements Cloneable {
             if ("木材".equals(workPlanShipDO.getCargoType().getTypeName())){
                 machineNum = machineNum*1;
             }
+            WorkPlanShipMachineAllocDO workPlanShipMachineAllocDO = new WorkPlanShipMachineAllocDO();
+            AlgShipMachineAlloc algShipMachineAlloc = new AlgShipMachineAlloc();
+            algShipMachineAlloc.setMachineCount(machineNum);
+            algShipMachineAlloc.setMachineName("挖掘机");
+            algShipMachineAlloc.setMachineClassCode(MachineClassEnum.SHORE.getCode());
+            algShipMachineAlloc.setVoyageNo(workPlanShipDO.getShipForecast().getVoyageNo());
+            workPlanShipMachineAllocDO.setAlgShipMachineAlloc(algShipMachineAlloc);
+            workPlanShipMachineAllocDO.setStartTime(new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanStartTime()));
+            workPlanShipMachineAllocDO.setEndTime( new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanFinishTime()));
 
         }
+
+
+
         return result;
 
     }
