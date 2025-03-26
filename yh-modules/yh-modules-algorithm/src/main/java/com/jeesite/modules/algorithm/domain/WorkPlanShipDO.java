@@ -39,6 +39,16 @@ public class WorkPlanShipDO {
      */
     private AlgCargoOwner cargoOwner;
 
+    /**
+     * 是否需要更新计划
+     */
+    private boolean updatePlan = false;
+
+    /**
+     * 以前计划
+     */
+    private AlgShipWorkPlan previousWorkPlan;
+
 
     public void setShipForecast(AlgShipForecast shipForecast) {
         this.shipForecast = shipForecast;
@@ -76,5 +86,9 @@ public class WorkPlanShipDO {
 
     public void setAlgShipPlan(AlgShipPlan algShipPlan) {
         this.algShipPlan = algShipPlan;
+    }
+
+    public void setUpdatePlan(boolean updatePlan) {
+        this.updatePlan = updatePlan;
     }
 }

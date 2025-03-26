@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.jeesite.common.annotation.JhyjField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -169,7 +170,12 @@ public class AlgShipWorkPlan implements Serializable {
 
 
 
-
+    /**
+     * 作业要求
+     */
+    @TableField(exist = false,value = "WORK_REQUIRE")
+    @Schema(title ="作业要求")
+    private String workRequire;
 
 
 

@@ -21,16 +21,14 @@ import org.apache.shiro.authc.AuthenticationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -71,6 +69,14 @@ public class PlanningServiceImpl implements IPlanningService {
     private  AlgShoreMachineService algShoreMachineService;
     @Resource
     private  IAlgBerthMachineRelService algBerthMachineRelService;
+    @Resource
+    private  IAlgShipWorkPlanService algShipWorkPlanService;
+    @Resource
+    private  IAlgShipWorkShiftService algShipWorkShiftService;
+    @Resource
+    private  IAlgShipSiloArrangeService algShipSiloArrangeService;
+    @Resource
+    private  IAlgShipYardArrangeService algShipYardArrangeService;
 
 
 
@@ -78,6 +84,8 @@ public class PlanningServiceImpl implements IPlanningService {
 
     @Value("${dms.auth.max-try-times:5}")
     private Integer DMSMaxTryTimes;
+    @Autowired
+    private AlgShipWorkPlanServiceImpl algShipWorkPlanServiceImpl;
 
     @Override
     public R scheduleShipPlan() {
@@ -347,7 +355,19 @@ public class PlanningServiceImpl implements IPlanningService {
 
         WorkPlanMachinePool machinePool = this.createMachinePool(workPlanContext,now);
 
+        for (WorkPlanShipDO workPlanShipDO : shipDoList) {
+            // 判断是否是未做计划的
+//            boolean hasPlanned =
 
+            // 未做计划就从开始计划
+            // 已经做过计划就从之前的计划找
+
+
+            AlgShipRealTime algShipRealTime = workPlanShipDO.getAlgShipRealTime();
+//            algShipRealTime.getLoadProgress()
+
+
+        }
 
 
         return null;
@@ -374,6 +394,8 @@ public class PlanningServiceImpl implements IPlanningService {
             }
             return workPlanShipMachineAllocDO;
         }).toList();
+
+
         Map<String, List<WorkPlanShipMachineAllocDO>> machineAllocListMap = machineAllocDOS.stream().collect(Collectors.groupingBy(t -> t.getAlgShipMachineAlloc().getMachineId(), Collectors.toList()));
 
         // 岸机列表
@@ -387,6 +409,7 @@ public class PlanningServiceImpl implements IPlanningService {
         List<AlgBerthMachineRel> berthMachineRelList = this.algBerthMachineRelService.list();
 
         WorkPlanMachinePool machinePool = new WorkPlanMachinePool(workPlanContext, machineDOS, berthMachineRelList);
+        workPlanContext.setMachinePool(machinePool);
 
         return machinePool;
     }
@@ -411,7 +434,11 @@ public class PlanningServiceImpl implements IPlanningService {
 
         Map<String, AlgShipPlan> algShipPlanMap = shipPlanList.stream().collect(Collectors.toMap(AlgShipPlan::getShipForcastId, t -> t));
 
-        return algShipRealTimeList.stream().map(t -> {
+        List<AlgShipWorkPlan> workPlanList = algShipWorkPlanService.list(Wrappers.lambdaQuery(AlgShipWorkPlan.class).in(AlgShipWorkPlan::getVoyageNo, voyageNoList));
+        Map<String, AlgShipWorkPlan> workPlanMap = workPlanList.stream().collect(Collectors.toMap(AlgShipWorkPlan::getVoyageNo, t -> t));
+
+
+        List<WorkPlanShipDO> workPlanShipDOS = algShipRealTimeList.stream().map(t -> {
             WorkPlanShipDO workPlanShipDO = new WorkPlanShipDO(workPlanContext);
             workPlanShipDO.setAlgShipRealTime(t);
             AlgShipForecast algShipForecast = shipForecastMap.get(t.getVoyageNo());
@@ -419,10 +446,34 @@ public class PlanningServiceImpl implements IPlanningService {
             AlgShipInfo algShipInfo = shipInfoMap.get(t.getVoyageNo());
             if (algShipInfo != null) workPlanShipDO.setShipInfo(algShipInfo);
             AlgShipPlan algShipPlan = algShipPlanMap.get(t.getVoyageNo());
-            if (algShipPlan != null) workPlanShipDO.setAlgShipPlan(algShipPlan);
+            if (algShipPlan != null) {
+                workPlanShipDO.setAlgShipPlan(algShipPlan);
+                if (t.getBerthTime() != null) {
+                    workPlanShipDO.setUpdatePlan(true);
+                    algShipPlan.setPlanBerthTime(t.getBerthTime());
+                }
+                if (t.getWorkingStartTime() != null) {
+                    algShipPlan.setPlanStartTime(t.getWorkingStartTime());
+                }
+                if (t.getWorkingFinishTime() != null) {
+                    algShipPlan.setPlanFinishTime(t.getWorkingFinishTime());
+                }
+
+            }
+
+            AlgShipWorkPlan algShipWorkPlan = workPlanMap.get(t.getVoyageNo());
+            if (algShipWorkPlan != null) {
+//                workPlanShipDO
+            }
 
             return workPlanShipDO;
         }).collect(Collectors.toList());
+
+        // 更新计划
+        List<AlgShipPlan> updateList = workPlanShipDOS.stream().filter(WorkPlanShipDO::isUpdatePlan).map(WorkPlanShipDO::getAlgShipPlan).filter(Objects::nonNull).toList();
+        this.algShipPlanService.updateBatchById(updateList);
+
+        return workPlanShipDOS;
 
 
     }

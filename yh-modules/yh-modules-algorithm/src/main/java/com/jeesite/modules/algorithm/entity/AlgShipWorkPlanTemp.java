@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -155,4 +157,12 @@ public class AlgShipWorkPlanTemp implements Serializable {
      */
     @TableField("REMAINING_WEIGHT")
     private BigDecimal remainingWeight;
+
+
+    /**
+     * 作业要求
+     */
+    @TableField(exist = false,value = "WORK_REQUIRE")
+    @Schema(title ="作业要求")
+    private String workRequire;
 }

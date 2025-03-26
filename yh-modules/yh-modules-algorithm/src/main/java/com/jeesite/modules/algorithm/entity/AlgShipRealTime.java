@@ -160,7 +160,7 @@ public class AlgShipRealTime implements Serializable {
     private BigDecimal loadProgress;
 
     /**
-     * 装进度(吨)
+     * 卸进度(吨)
      */
     @TableField("UNLOAD_PROGRESS")
     private BigDecimal unloadProgress;
