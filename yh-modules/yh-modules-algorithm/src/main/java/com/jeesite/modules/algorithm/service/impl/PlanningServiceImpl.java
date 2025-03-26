@@ -5,10 +5,11 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.jeesite.common.base.R;
 import com.jeesite.common.base.REnum;
 import com.jeesite.common.enum1.AlgorithmEnum;
-import com.jeesite.common.media.VideoUtils;
 import com.jeesite.modules.algorithm.base.CommonConstant;
+import com.jeesite.modules.algorithm.base.MutableLocalDateTime;
 import com.jeesite.modules.algorithm.domain.*;
 import com.jeesite.modules.algorithm.entity.*;
+import com.jeesite.modules.algorithm.enums.MachineClassEnum;
 import com.jeesite.modules.algorithm.feign.client.DmsClientService;
 import com.jeesite.modules.algorithm.planning.PlanningContext;
 import com.jeesite.modules.algorithm.planning.TideRulerHandler;
@@ -64,6 +65,13 @@ public class PlanningServiceImpl implements IPlanningService {
     private DMSLoginApplicationRunner dmsLoginApplicationRunner;
     @Resource
     private ObjectProvider<IPlanningService> thisService;
+    @Resource
+    private  IAlgShipMachineAllocService algShipMachineAllocService;
+    @Resource
+    private  AlgShoreMachineService algShoreMachineService;
+    @Resource
+    private  IAlgBerthMachineRelService algBerthMachineRelService;
+
 
 
     private final ThreadLocal<Integer> DMSTryTokenTimes = ThreadLocal.withInitial(() -> 0);
@@ -327,6 +335,8 @@ public class PlanningServiceImpl implements IPlanningService {
 
     @Override
     public R generateWorkPlan() {
+        LocalDateTime now = LocalDateTime.now();
+
         WorkPlanContext workPlanContext = new WorkPlanContext();
         // 货种
         this.setCargoTypeData(workPlanContext);
@@ -335,10 +345,50 @@ public class PlanningServiceImpl implements IPlanningService {
         // 船舶数据
         List<WorkPlanShipDO> shipDoList = assembleShipWorkPlanData(workPlanContext);
 
-//        new WorkPlanMachinePool()
+        WorkPlanMachinePool machinePool = this.createMachinePool(workPlanContext,now);
+
+
 
 
         return null;
+    }
+
+    private WorkPlanMachinePool createMachinePool(WorkPlanContext workPlanContext, LocalDateTime now) {
+
+        List<AlgShipMachineAlloc> algShipMachineAllocs = this.algShipMachineAllocService.listAfterWorkingFinishTime(now.minusDays(2));
+        List<String> voyageNoList = algShipMachineAllocs.stream().map(t -> t.getVoyageNo()).distinct().toList();
+        List<AlgShipPlan> shipPlanList = algShipPlanService.list(Wrappers.lambdaQuery(AlgShipPlan.class).in(AlgShipPlan::getShipForcastId, voyageNoList));
+        Map<String, AlgShipPlan> algShipPlanMap = shipPlanList.stream().collect(Collectors.toMap(t -> t.getShipForcastId(), t -> t));
+        // 机械占用
+        List<WorkPlanShipMachineAllocDO> machineAllocDOS = algShipMachineAllocs.stream()
+                // 只统计岸机
+                .filter(t-> MachineClassEnum.SHORE.getCode() == t.getMachineClassCode())
+                .map(t -> {
+            WorkPlanShipMachineAllocDO workPlanShipMachineAllocDO = new WorkPlanShipMachineAllocDO();
+            workPlanShipMachineAllocDO.setAlgShipMachineAlloc(t);
+            AlgShipPlan algShipPlan = algShipPlanMap.get(t.getVoyageNo());
+            if (algShipPlan != null) {
+                workPlanShipMachineAllocDO.setStartTime(new MutableLocalDateTime(algShipPlan.getPlanStartTime()));
+                workPlanShipMachineAllocDO.setEndTime(new MutableLocalDateTime(algShipPlan.getPlanFinishTime()));
+
+            }
+            return workPlanShipMachineAllocDO;
+        }).toList();
+        Map<String, List<WorkPlanShipMachineAllocDO>> machineAllocListMap = machineAllocDOS.stream().collect(Collectors.groupingBy(t -> t.getAlgShipMachineAlloc().getMachineId(), Collectors.toList()));
+
+        // 岸机列表
+        List<AlgShoreMachine> algShoreMachines = this.algShoreMachineService.list(Wrappers.lambdaQuery(AlgShoreMachine.class).eq(AlgShoreMachine::getStatus, CommonConstant.TRUE_INT));
+        // 组装机械和机械占用
+        List<WorkPlanShoreMachineDO> machineDOS = algShoreMachines.stream().map(t -> {
+            return new WorkPlanShoreMachineDO(t, machineAllocListMap.get(t.getId()));
+        }).toList();
+
+        // 泊位机械关系
+        List<AlgBerthMachineRel> berthMachineRelList = this.algBerthMachineRelService.list();
+
+        WorkPlanMachinePool machinePool = new WorkPlanMachinePool(workPlanContext, machineDOS, berthMachineRelList);
+
+        return machinePool;
     }
 
     private List<WorkPlanShipDO> assembleShipWorkPlanData(WorkPlanContext workPlanContext) {

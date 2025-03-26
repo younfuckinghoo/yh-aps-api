@@ -8,6 +8,7 @@ import com.jeesite.modules.algorithm.planning.ruler.RulerBerthShipInfo;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,6 +120,10 @@ public class RulerCollection {
 //        shipLengthMargin = new BigDecimal("1.1");
 //        tideHeightMargin = new BigDecimal("1.1");
 //        quarantineMinutes = 180;
+//        BerthRestInWeek berthRestInWeek = new BerthRestInWeek();
+//        berthRestInWeek.setBerthNo("802");
+//        berthRestInWeek.setDaysList(List.of(DayOfWeek.MONDAY));
+//        berthRestInWeekList.add(berthRestInWeek);
         bollardCountAsShip = 4;
 
         rulerBerthShipInfoList = List.of(

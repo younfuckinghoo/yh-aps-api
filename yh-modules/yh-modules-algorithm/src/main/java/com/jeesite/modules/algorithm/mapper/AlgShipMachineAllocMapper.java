@@ -3,6 +3,10 @@ package com.jeesite.modules.algorithm.mapper;
 import com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,11 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface AlgShipMachineAllocMapper extends BaseMapper<AlgShipMachineAlloc> {
 
+
+    /**
+     * 查询某个时间点之后的
+     * @param endTime
+     * @return
+     */
+     List<AlgShipMachineAlloc> listAfterWorkingFinishTime(@Param("endTime")LocalDateTime endTime);
 }

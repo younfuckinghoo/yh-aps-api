@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @Data
 public class WorkPlanMachinePool implements Cloneable {
-    WorkPlanContext workPlanContext;
+    private final WorkPlanContext workPlanContext;
 
     /**
      * 岸机列表
@@ -114,12 +114,12 @@ public class WorkPlanMachinePool implements Cloneable {
             AlgShipMachineAlloc algShipMachineAlloc = new AlgShipMachineAlloc();
             algShipMachineAlloc.setMachineCount(machineNum);
             algShipMachineAlloc.setMachineName("挖掘机");
-            algShipMachineAlloc.setMachineClassCode(MachineClassEnum.SHORE.getCode());
+            algShipMachineAlloc.setMachineClassCode(MachineClassEnum.MOBILE.getCode());
             algShipMachineAlloc.setVoyageNo(workPlanShipDO.getShipForecast().getVoyageNo());
             workPlanShipMachineAllocDO.setAlgShipMachineAlloc(algShipMachineAlloc);
             workPlanShipMachineAllocDO.setStartTime(new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanStartTime()));
             workPlanShipMachineAllocDO.setEndTime( new MutableLocalDateTime(workPlanShipDO.getAlgShipPlan().getPlanFinishTime()));
-
+            result.add(workPlanShipMachineAllocDO);
         }
 
 
@@ -128,7 +128,12 @@ public class WorkPlanMachinePool implements Cloneable {
 
     }
 
-
+    /**
+     * 匹配装船作业
+     * @param avaliableMachineList
+     * @param workPlanShipDO
+     * @return
+     */
     private List<WorkPlanShoreMachineDO> mappingLoadMachine(List<WorkPlanShoreMachineDO> avaliableMachineList, WorkPlanShipDO workPlanShipDO) {
         String berthNo = workPlanShipDO.getAlgShipPlan().getBerthNo();
 //        西2：默认2台门机（1#，2#）

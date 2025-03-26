@@ -6,6 +6,9 @@ import com.jeesite.modules.algorithm.service.IAlgShipMachineAllocService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
  * <p>
  * 船舶机械分配表，记录每条船使用的机械设备 服务实现类
@@ -17,4 +20,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AlgShipMachineAllocServiceImpl extends ServiceImpl<AlgShipMachineAllocMapper, AlgShipMachineAlloc> implements IAlgShipMachineAllocService {
 
+    @Override
+    public List<AlgShipMachineAlloc> listAfterWorkingFinishTime(LocalDateTime endTime) {
+        return this.baseMapper.listAfterWorkingFinishTime(endTime);
+    }
 }

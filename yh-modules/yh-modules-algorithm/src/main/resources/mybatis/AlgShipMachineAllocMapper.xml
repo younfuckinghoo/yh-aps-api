@@ -2,4 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.jeesite.modules.algorithm.mapper.AlgShipMachineAllocMapper">
 
+    <select id="listAfterWorkingFinishTime" resultType="com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc">
+        SELECT MA.* FROM ALG_SHIP_MACHINE_ALLOC MA LEFT JOIN ALG_SHIP_PLAN P ON MA.VOYAGE_NO = P.SHIP_FORCAST_ID WHERE P.PLAN_FINISH_TIME >  #{endTime}
+    </select>
 </mapper>
