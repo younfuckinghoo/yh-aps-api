@@ -12,9 +12,7 @@ import com.jeesite.modules.algorithm.workplan.WorkPlanContext;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +31,9 @@ public class WorkPlanMachinePool implements Cloneable {
 
     private final List<AlgBerthMachineRel> algBerthMachineRels;
 
+    /**
+     * 泊位岸机
+     */
     private final Map<String, List<WorkPlanShoreMachineDO>> berthMachineListMap;
 
     public WorkPlanMachinePool(WorkPlanContext workPlanContext, List<WorkPlanShoreMachineDO> workPlanShoreMachines, List<AlgBerthMachineRel> algBerthMachineRels) {
@@ -40,7 +41,14 @@ public class WorkPlanMachinePool implements Cloneable {
         this.workPlanShoreMachines = workPlanShoreMachines;
         this.algBerthMachineRels = algBerthMachineRels;
         Map<String, WorkPlanShoreMachineDO> machineDoMap = workPlanShoreMachines.stream().collect(Collectors.toMap(t -> t.getAlgShoreMachine().getMachineNo(), t -> t));
-        berthMachineListMap = algBerthMachineRels.stream().collect(Collectors.groupingBy(t -> t.getBerthNo(), Collectors.collectingAndThen(Collectors.toList(), p -> p.stream().map(x -> machineDoMap.get(x.getMachineNo())).collect(Collectors.toList()))));
+        Map<String, List<AlgBerthMachineRel>> listMap = algBerthMachineRels.stream().collect(Collectors.groupingBy(t -> t.getBerthNo(), Collectors.toList()));
+        berthMachineListMap = new HashMap<>();
+        for (Map.Entry<String, List<AlgBerthMachineRel>> stringListEntry : listMap.entrySet()) {
+            String berthNo = stringListEntry.getKey();
+            List<WorkPlanShoreMachineDO> machineDOS = stringListEntry.getValue().stream().sorted(Comparator.comparing(AlgBerthMachineRel::getOrderIdx)).map(x -> machineDoMap.get(x.getMachineNo())).toList();
+            berthMachineListMap.put(berthNo, machineDOS);
+        }
+//        berthMachineListMap = algBerthMachineRels.stream().collect(Collectors.groupingBy(t -> t.getBerthNo(), Collectors.collectingAndThen(Collectors.toList(), p -> p.stream().map(x -> machineDoMap.get(x.getMachineNo())).collect(Collectors.toList()))));
 
     }
 

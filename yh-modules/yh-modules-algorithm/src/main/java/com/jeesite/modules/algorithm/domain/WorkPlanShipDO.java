@@ -6,6 +6,7 @@ import com.jeesite.modules.algorithm.workplan.WorkPlanContext;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 public class WorkPlanShipDO {
@@ -49,6 +50,20 @@ public class WorkPlanShipDO {
      */
     private AlgShipWorkPlan previousWorkPlan;
 
+    /**
+     * 库场安排
+     */
+    List<AlgShipYardArrange> shipYardArrangeList;
+    /**
+     * 筒仓安排
+     */
+    List<AlgShipSiloArrange> shipSiloArrangeList;
+
+    /**
+     * 机械占用
+     */
+    List<AlgShipMachineAlloc> algShipMachineAllocList;
+
 
     public void setShipForecast(AlgShipForecast shipForecast) {
         this.shipForecast = shipForecast;
@@ -91,4 +106,32 @@ public class WorkPlanShipDO {
     public void setUpdatePlan(boolean updatePlan) {
         this.updatePlan = updatePlan;
     }
+
+    public void setPreviousWorkPlan(AlgShipWorkPlan previousWorkPlan) {
+        this.previousWorkPlan = previousWorkPlan;
+    }
+
+    public void setShipYardArrangeList(List<AlgShipYardArrange> shipYardArrangeList) {
+        this.shipYardArrangeList = shipYardArrangeList;
+    }
+
+    public List<AlgShipYardArrange> getShipYardArrangeList() {
+        return shipYardArrangeList;
+    }
+
+    public void setShipSiloArrangeList(List<AlgShipSiloArrange> shipSiloArrangeList) {
+        this.shipSiloArrangeList = shipSiloArrangeList;
+    }
+
+
+    public void setAlgShipMachineAllocList(List<AlgShipMachineAlloc> algShipMachineAllocList) {
+        this.algShipMachineAllocList = algShipMachineAllocList;
+    }
+
+
+    public boolean isPlanned(){
+        return this.previousWorkPlan!=null;
+    }
+
+
 }
