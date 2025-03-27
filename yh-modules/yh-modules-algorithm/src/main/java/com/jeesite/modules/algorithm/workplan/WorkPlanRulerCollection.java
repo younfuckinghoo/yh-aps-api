@@ -3,9 +3,12 @@ package com.jeesite.modules.algorithm.workplan;
 import com.jeesite.modules.algorithm.enums.CargoWhereaboutsRequirementEnum;
 import com.jeesite.modules.algorithm.enums.LoadUnloadEnum;
 import com.jeesite.modules.algorithm.workplan.ruler.CargoEfficiencyRuler;
+import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+@Data
 
 public class WorkPlanRulerCollection {
 
@@ -38,14 +41,12 @@ public class WorkPlanRulerCollection {
                 new CargoEfficiencyRuler("805", "粮食", "嘉吉", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1500)),
                 new CargoEfficiencyRuler("805", "粮食", "邦基三维", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(850)),
                 new CargoEfficiencyRuler("805", "粮食", "中储粮", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(2000)),
-                new CargoEfficiencyRuler("805", "粮食", "嘉吉", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1000)),
                 // 西6
                 new CargoEfficiencyRuler("806", "粮食", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1000)),
                 new CargoEfficiencyRuler("806", "粮食", "中纺粮油", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1300)),
                 new CargoEfficiencyRuler("806", "粮食", "嘉吉", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1500)),
                 new CargoEfficiencyRuler("806", "粮食", "邦基三维", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(850)),
                 new CargoEfficiencyRuler("806", "粮食", "中储粮", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(2000)),
-                new CargoEfficiencyRuler("806", "粮食", "嘉吉", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(1000)),
                 // 西18
                 new CargoEfficiencyRuler("509", "木材", LoadUnloadEnum.UNLOAD, BigDecimal.valueOf(400)),
                 new CargoEfficiencyRuler("509", "粮食", LoadUnloadEnum.LOAD, BigDecimal.valueOf(2000)),

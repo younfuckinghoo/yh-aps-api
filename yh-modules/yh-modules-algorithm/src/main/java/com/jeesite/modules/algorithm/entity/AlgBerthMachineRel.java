@@ -38,7 +38,7 @@ public class AlgBerthMachineRel implements Serializable {
      * 排序序号
      */
     @TableField("ORDER_IDX")
-    private String orderIdx;
+    private Integer orderIdx;
 
 
 

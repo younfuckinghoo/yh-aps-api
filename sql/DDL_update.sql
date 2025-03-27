@@ -142,6 +142,7 @@ ON TABLE ALG_SILO_BERTH_REL IS '筒仓与泊位关联关系表';
 --------------------------
 CREATE TABLE ALG_SHIP_SILO_ARRANGE
 (
+    ID        VARCHAR2(50) PRIMARY KEY,
     VOYAGE_NO VARCHAR2(50), -- 航次号申报唯一ID
     SILO_NO   VARCHAR2(20), -- 筒仓编号
 );
@@ -248,6 +249,8 @@ ON TABLE ALG_YARD_REALTIME IS '堆场实时数据表，记录动态库存变化'
 --------------------------
 CREATE TABLE ALG_SHIP_YARD_ARRANGE
 (
+
+    ID        VARCHAR2(50) PRIMARY KEY,
     VOYAGE_NO VARCHAR2(50),  -- 航次号申报唯一ID
     YARD_NAME VARCHAR2(100), -- 堆场名称
     YARD_NO   VARCHAR2(20)   -- 堆场编号

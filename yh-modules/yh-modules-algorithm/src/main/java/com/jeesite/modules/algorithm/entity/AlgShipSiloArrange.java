@@ -1,8 +1,6 @@
 package com.jeesite.modules.algorithm.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import lombok.Getter;
@@ -22,11 +20,6 @@ import lombok.Setter;
 public class AlgShipSiloArrange implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    /**
-     * 唯一标识符
-     */
-    @TableId(value = "ID", type = IdType.ASSIGN_ID)
-    private String id;
 
     /**
      * 关联的航次号

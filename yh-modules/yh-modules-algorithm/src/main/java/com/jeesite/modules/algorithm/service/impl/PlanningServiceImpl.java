@@ -15,7 +15,9 @@ import com.jeesite.modules.algorithm.planning.PlanningContext;
 import com.jeesite.modules.algorithm.planning.TideRulerHandler;
 import com.jeesite.modules.algorithm.runner.DMSLoginApplicationRunner;
 import com.jeesite.modules.algorithm.service.*;
+import com.jeesite.modules.algorithm.utils.MathUtil;
 import com.jeesite.modules.algorithm.workplan.WorkPlanContext;
+import com.jeesite.modules.algorithm.workplan.ruler.CargoEfficiencyRuler;
 import jakarta.annotation.Resource;
 import org.apache.shiro.authc.AuthenticationException;
 import org.slf4j.Logger;
@@ -24,7 +26,9 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -344,6 +348,10 @@ public class PlanningServiceImpl implements IPlanningService {
     @Override
     public R generateWorkPlan() {
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime  = now.withHour(18).withMinute(0).withSecond(0).withNano(0);
+        if (now.getHour()>10){
+            startTime = startTime.plusDays(1);
+        }
 
         WorkPlanContext workPlanContext = new WorkPlanContext();
         // 货种
@@ -353,14 +361,55 @@ public class PlanningServiceImpl implements IPlanningService {
         // 船舶数据
         List<WorkPlanShipDO> shipDoList = assembleShipWorkPlanData(workPlanContext);
 
-        WorkPlanMachinePool machinePool = this.createMachinePool(workPlanContext,now);
+        WorkPlanMachinePool machinePool = this.createMachinePool(workPlanContext, now);
 
         for (WorkPlanShipDO workPlanShipDO : shipDoList) {
-            // 判断是否是未做计划的
-//            boolean hasPlanned =
+            AlgShipPlan algShipPlan = workPlanShipDO.getAlgShipPlan();
+            AlgShipRealTime shipRealTime = workPlanShipDO.getAlgShipRealTime();
 
-            // 未做计划就从开始计划
-            // 已经做过计划就从之前的计划找
+            BigDecimal effi = this.mappingEfficiency(workPlanShipDO, workPlanContext);
+
+            // 判断是否是未做计划的
+            boolean hasPlanned = workPlanShipDO.isPlanned();
+            // 计算剩余作业量
+            BigDecimal leftWeight = workPlanShipDO.getThroughputWeight();
+            // 如果已经有计划说明已经开始作业了 减去已经完成作业量
+            if (hasPlanned) {
+                BigDecimal realProgress = shipRealTime.getRealProgress();
+                leftWeight = leftWeight.subtract(realProgress);
+                // 如果计划开始时间大于11点 那么预期将要完成的作业量为之前预估的量 剩余工作量为上一次预估的剩余工作量
+                if (algShipPlan.getPlanStartTime().isAfter(now.withHour(11).withMinute(0).withSecond(0).withNano(0))) {
+                    leftWeight = workPlanShipDO.getPreviousWorkPlan().getRemainingWeight();
+                } else {
+                    // 如果已经作业了 则需要减去11点到18点的预估作业量
+                    BigDecimal delta = BigDecimal.valueOf(18 - 11).multiply(effi);
+                    leftWeight = leftWeight.subtract(delta);
+                }
+            }
+            //
+
+
+            // 确定开始时间
+            // 确定机械效率
+            // 匹配机械 生成机械占用
+            // 根据泊位-货种-装卸要求-疏港方式 确定货物如何存放（堆场|筒仓|无） 生成筒仓|堆场占用 更新占用容量 可用容量
+
+            // 生辰作业计划
+            // 生成作业班次
+
+
+            LocalDateTime endTime;
+            // 未做计划
+            if (!hasPlanned) {
+                // 开始时间 船舶计划开始时间
+                startTime = workPlanShipDO.getAlgShipPlan().getPlanStartTime();
+
+
+            } else {
+                // 已做计划
+                // 开始时间 今天18:00
+
+            }
 
 
             AlgShipRealTime algShipRealTime = workPlanShipDO.getAlgShipRealTime();
@@ -373,12 +422,58 @@ public class PlanningServiceImpl implements IPlanningService {
         return null;
     }
 
+    private BigDecimal mappingEfficiency(WorkPlanShipDO workPlanShipDO, WorkPlanContext workPlanContext) {
+
+        List<CargoEfficiencyRuler> cargoEfficiencyRulerList = workPlanContext.getWorkPlanRulerCollection().getCargoEfficiencyRulerList();
+
+
+        List<CargoEfficiencyRuler> list = cargoEfficiencyRulerList.stream().filter(t -> {
+            AlgShipPlan algShipPlan = workPlanShipDO.getAlgShipPlan();
+            return algShipPlan.getBerthNo().equals(t.getBerthNo())
+                    && t.getCargoType().equals(workPlanShipDO.getCargoType().getTypeName())
+                    && t.getLoadUnload() == workPlanShipDO.getLoadUnloadEnum();
+        }).toList();
+
+        // 如果区分不出唯一作业效率 通过货主过滤
+        if (list.size()>1 && list.stream().anyMatch(t->t.getCargoOwnerShortName()!=null)){
+            list = list.stream().filter(t->t.getCargoOwnerShortName()!=null?t.getCargoOwnerShortName().equals(workPlanShipDO.getCargoOwner().getOwnerShortName()):true).toList();
+            if (list.size()>1){
+                list = list.stream().filter(t->t.getCargoOwnerShortName()==null).toList();
+            }
+        }
+
+        // 如果区分不出唯一作业效率 通过过滤
+        if (list.size()>1 && list.stream().anyMatch(t->t.getCargoWhereaboutsRequirement()!=null)){
+            list = list.stream().filter(t->t.getCargoWhereaboutsRequirement()!=null?t.getCargoWhereaboutsRequirement().getCode()==workPlanShipDO.getShipForecast().getCargoWhereabouts():true).toList();
+            if (list.size()>1){
+                list = list.stream().filter(t->t.getCargoWhereaboutsRequirement()==null).toList();
+            }
+        }
+
+        if (list.size()>1)
+            throw new RuntimeException("不能确定唯一作业效率");
+
+        return list.get(0).getEfficiencyPerHour();
+
+
+    }
+
     private WorkPlanMachinePool createMachinePool(WorkPlanContext workPlanContext, LocalDateTime now) {
 
         List<AlgShipMachineAlloc> algShipMachineAllocs = this.algShipMachineAllocService.listAfterWorkingFinishTime(now.minusDays(2));
         List<String> voyageNoList = algShipMachineAllocs.stream().map(t -> t.getVoyageNo()).distinct().toList();
         List<AlgShipPlan> shipPlanList = algShipPlanService.list(Wrappers.lambdaQuery(AlgShipPlan.class).in(AlgShipPlan::getShipForcastId, voyageNoList));
         Map<String, AlgShipPlan> algShipPlanMap = shipPlanList.stream().collect(Collectors.toMap(t -> t.getShipForcastId(), t -> t));
+        List<WorkPlanShipDO> workPlanShipDOS = workPlanContext.getWorkPlanShipDOS();
+        Map<String, List<AlgShipMachineAlloc>> shipMachineAllocListMap = algShipMachineAllocs.stream().collect(Collectors.groupingBy(AlgShipMachineAlloc::getVoyageNo));
+        // 将机械占用情况设置到船舶DO中
+        for (WorkPlanShipDO workPlanShipDO : workPlanShipDOS) {
+            List<AlgShipMachineAlloc> shipMachineAllocs = shipMachineAllocListMap.get(workPlanShipDO.getShipForecast().getVoyageNo());
+            if (!CollectionUtils.isEmpty(shipMachineAllocs)) {
+                workPlanShipDO.setAlgShipMachineAllocList(shipMachineAllocs);
+            }
+        }
+
         // 机械占用
         List<WorkPlanShipMachineAllocDO> machineAllocDOS = algShipMachineAllocs.stream()
                 // 只统计岸机
@@ -435,7 +530,26 @@ public class PlanningServiceImpl implements IPlanningService {
         Map<String, AlgShipPlan> algShipPlanMap = shipPlanList.stream().collect(Collectors.toMap(AlgShipPlan::getShipForcastId, t -> t));
 
         List<AlgShipWorkPlan> workPlanList = algShipWorkPlanService.list(Wrappers.lambdaQuery(AlgShipWorkPlan.class).in(AlgShipWorkPlan::getVoyageNo, voyageNoList));
-        Map<String, AlgShipWorkPlan> workPlanMap = workPlanList.stream().collect(Collectors.toMap(AlgShipWorkPlan::getVoyageNo, t -> t));
+        Map<String, AlgShipWorkPlan> workPlanMap = workPlanList.stream().collect(Collectors.toMap(AlgShipWorkPlan::getVoyageNo, t -> t,(x1,x2)->{
+            // 后出的计划的覆盖前面的
+            if (x1.getPlanTime().isAfter(x2.getPlanTime())){
+                return x1;
+            }else {
+                return x2;
+            }
+
+        }));
+//        List<String> workPlanIdList = workPlanList.stream().map(AlgShipWorkPlan::getId).toList();
+//        List<AlgShipWorkShift> algShipWorkShiftList = algShipWorkShiftService.list(Wrappers.lambdaQuery(AlgShipWorkShift.class).in(AlgShipWorkShift::getShipWorkPlanId, workPlanIdList));
+//        Map<String, List<AlgShipWorkShift>> shiftListMap = algShipWorkShiftList.stream().collect(Collectors.groupingBy(AlgShipWorkShift::getShipWorkPlanId, Collectors.toList()));
+
+        // 查询库场安排和筒仓安排的数据
+        List<AlgShipYardArrange> shipYardArrangeList = algShipYardArrangeService.list(Wrappers.lambdaQuery(AlgShipYardArrange.class).in(AlgShipYardArrange::getVoyageNo, voyageNoList));
+        Map<String, List<AlgShipYardArrange>> shipYardArrangeMap = shipYardArrangeList.stream().collect(Collectors.groupingBy(AlgShipYardArrange::getVoyageNo));
+
+        List<AlgShipSiloArrange> shipSiloArrangeList = algShipSiloArrangeService.list(Wrappers.lambdaQuery(AlgShipSiloArrange.class).in(AlgShipSiloArrange::getVoyageNo, voyageNoList));
+        Map<String, List<AlgShipSiloArrange>> shipSiloArrangeMap = shipSiloArrangeList.stream().collect(Collectors.groupingBy(AlgShipSiloArrange::getVoyageNo));
+
 
 
         List<WorkPlanShipDO> workPlanShipDOS = algShipRealTimeList.stream().map(t -> {
@@ -463,8 +577,13 @@ public class PlanningServiceImpl implements IPlanningService {
 
             AlgShipWorkPlan algShipWorkPlan = workPlanMap.get(t.getVoyageNo());
             if (algShipWorkPlan != null) {
-//                workPlanShipDO
+                workPlanShipDO.setPreviousWorkPlan(algShipWorkPlan);
+                // 设置库场安排和筒仓安排
+                workPlanShipDO.setShipYardArrangeList(shipYardArrangeMap.getOrDefault(t.getVoyageNo(), Collections.emptyList()));
+                workPlanShipDO.setShipSiloArrangeList(shipSiloArrangeMap.getOrDefault(t.getVoyageNo(), Collections.emptyList()));
+
             }
+
 
             return workPlanShipDO;
         }).collect(Collectors.toList());
@@ -473,6 +592,8 @@ public class PlanningServiceImpl implements IPlanningService {
         List<AlgShipPlan> updateList = workPlanShipDOS.stream().filter(WorkPlanShipDO::isUpdatePlan).map(WorkPlanShipDO::getAlgShipPlan).filter(Objects::nonNull).toList();
         this.algShipPlanService.updateBatchById(updateList);
 
+
+        workPlanContext.setWorkPlanShipDOS(workPlanShipDOS);
         return workPlanShipDOS;
 
 

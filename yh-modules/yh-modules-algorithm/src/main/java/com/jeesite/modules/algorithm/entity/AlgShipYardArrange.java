@@ -28,6 +28,12 @@ public class AlgShipYardArrange implements Serializable {
     @TableId(value = "ID", type = IdType.ASSIGN_ID)
     private String id;
 
+
+    /**
+     * id
+     */
+    @TableId(value = "ID", type = IdType.AUTO)
+    private String id;
     /**
      * 关联的航次号
      */
