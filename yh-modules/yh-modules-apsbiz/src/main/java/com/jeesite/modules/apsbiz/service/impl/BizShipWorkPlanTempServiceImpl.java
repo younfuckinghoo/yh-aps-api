@@ -9,6 +9,15 @@ import com.jeesite.common.base.R;
 import com.jeesite.common.base.YhServiceImpl;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.common.utils.MybatisPlusOracleUtils;
+import com.jeesite.common.utils.MybatisPlusUtils;
+import com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc;
+import com.jeesite.modules.algorithm.entity.AlgShipSiloArrange;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
+import com.jeesite.modules.algorithm.entity.AlgShipYardArrange;
+import com.jeesite.modules.algorithm.service.IAlgShipMachineAllocService;
+import com.jeesite.modules.algorithm.service.IAlgShipSiloArrangeService;
+import com.jeesite.modules.algorithm.service.IAlgShipWorkShiftTempService;
+import com.jeesite.modules.algorithm.service.IAlgShipYardArrangeService;
 import com.jeesite.modules.apsbiz.entity.BizShipRealTime;
 import com.jeesite.modules.apsbiz.entity.BizShipWorkPlan;
 import com.jeesite.modules.apsbiz.entity.BizShipWorkPlanTemp;
@@ -26,6 +35,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +50,17 @@ public class BizShipWorkPlanTempServiceImpl extends YhServiceImpl<BizShipWorkPla
     @Resource
     private DockService dockService;
 
+    @Resource
+    private IAlgShipWorkShiftTempService algShipWorkShiftTempService;
+
+    @Resource
+    private IAlgShipSiloArrangeService algShipSiloArrangeService;
+
+    @Resource
+    private IAlgShipYardArrangeService algShipYardArrangeService;
+
+    @Resource
+    private IAlgShipMachineAllocService algShipMachineAllocService;
 
     @Value("${default.page}")
     private Integer defPage;
@@ -112,7 +133,6 @@ public class BizShipWorkPlanTempServiceImpl extends YhServiceImpl<BizShipWorkPla
         }
         // 泊位
         queryWrapper.eq(null != algShipWorkPlanTemp.getBerthNo(), "B.REAL_TIME_BERTH", algShipWorkPlanTemp.getBerthNo());
-
         // 靠泊时间（范围开始）
         queryWrapper.apply(null != algShipWorkPlanTemp.getBerthTimeStart(),  "TO_CHAR(B.BERTH_TIME,'YYYY-MM-DD HH24:MI:SS') >= TO_CHAR({0},'YYYY-MM-DD HH24:MI:SS')", algShipWorkPlanTemp.getBerthTimeStart());
         // 靠泊时间（范围结束）
@@ -226,5 +246,66 @@ public class BizShipWorkPlanTempServiceImpl extends YhServiceImpl<BizShipWorkPla
 
         return R.ok();
     }
-
+    @Override
+    public void updateOtherInfo(BizShipWorkPlanTemp bizShipWorkPlanTemp, BizShipWorkPlanTemp base) {
+        AlgShipSiloArrange algShipSiloArrange = new AlgShipSiloArrange();
+        algShipSiloArrange.setVoyageNo(base.getVoyageNo());
+        List<AlgShipSiloArrange> siloList = algShipSiloArrangeService.queryList(algShipSiloArrange);
+        AlgShipYardArrange algShipyardArrange = new AlgShipYardArrange();
+        algShipyardArrange.setVoyageNo(base.getVoyageNo());
+        List<AlgShipYardArrange> yardList = algShipYardArrangeService.queryList(algShipyardArrange);
+        AlgShipMachineAlloc machineAlloc = new AlgShipMachineAlloc();
+        machineAlloc.setVoyageNo(base.getVoyageNo());
+        List<AlgShipMachineAlloc> machineAllocList = algShipMachineAllocService.queryList(machineAlloc);
+        AlgShipWorkShiftTemp algShipWorkShiftTemp = new AlgShipWorkShiftTemp();
+        algShipWorkShiftTemp.setShipWorkPlanId(base.getId());
+        QueryWrapper<AlgShipWorkShiftTemp> queryWrapper = MybatisPlusUtils.getQueryWrapper(algShipWorkShiftTemp, null);
+        if(algShipWorkShiftTempService.count(queryWrapper) == 0) {
+            List<AlgShipWorkShiftTemp> list = new ArrayList<>();
+            bizShipWorkPlanTemp.getShiftTempList().forEach(item -> {
+                AlgShipWorkShiftTemp temp = new AlgShipWorkShiftTemp();
+                temp.setShipWorkPlanId(item.getShipWorkPlanId());
+                temp.setWorkload(item.getWorkload());
+                temp.setManpowerArrange(item.getManpowerArrange());
+                temp.setShiftType(item.getShiftType());
+                list.add(temp);
+            });
+            algShipWorkShiftTempService.saveBatch(list);
+        }else {
+            algShipWorkShiftTempService.updateBatchById(bizShipWorkPlanTemp.getShiftTempList());
+        }
+        if(!siloList.equals(bizShipWorkPlanTemp.getSiloList())) {
+            algShipSiloArrangeService.removeBatchByIds(siloList);
+            algShipSiloArrangeService.saveBatch(bizShipWorkPlanTemp.getSiloList());
+        }
+        if(!yardList.equals(bizShipWorkPlanTemp.getYardList())) {
+            algShipYardArrangeService.removeBatchByIds(yardList);
+            algShipYardArrangeService.saveBatch(bizShipWorkPlanTemp.getYardList());
+        }
+        List<AlgShipMachineAlloc> deleteList = new ArrayList<>();
+        List<AlgShipMachineAlloc> updateList = new ArrayList<>();
+        List<AlgShipMachineAlloc> addList = new ArrayList<>();
+        machineAllocList.forEach(item -> {
+            if(bizShipWorkPlanTemp.getMachineList().stream().noneMatch(i -> Objects.equals(i.getId(), item.getId()))) {
+                deleteList.add(item);
+            }
+        });
+        bizShipWorkPlanTemp.getMachineList().forEach(item -> {
+            if(item.getId() == null) {
+                item.setVoyageNo(base.getVoyageNo());
+                addList.add(item);
+            }else {
+                updateList.add(item);
+            }
+        });
+        if(!addList.isEmpty()) {
+            algShipMachineAllocService.saveBatch(addList);
+        }
+        if(!updateList.isEmpty()) {
+            algShipMachineAllocService.updateBatchById(updateList);
+        }
+        if(!deleteList.isEmpty()) {
+            algShipMachineAllocService.removeBatchByIds(deleteList);
+        }
+    }
 }

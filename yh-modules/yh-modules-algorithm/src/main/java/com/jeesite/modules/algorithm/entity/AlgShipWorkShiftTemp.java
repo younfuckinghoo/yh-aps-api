@@ -1,5 +1,6 @@
 package com.jeesite.modules.algorithm.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -27,7 +28,7 @@ public class AlgShipWorkShiftTemp implements Serializable {
     /**
      * 班次唯一标识符
      */
-    @TableId("ID")
+    @TableId(value = "ID", type = IdType.ASSIGN_ID)
     private String id;
 
     /**

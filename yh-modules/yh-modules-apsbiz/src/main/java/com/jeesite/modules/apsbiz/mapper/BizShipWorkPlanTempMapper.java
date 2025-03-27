@@ -14,18 +14,7 @@ import java.util.List;
 public interface BizShipWorkPlanTempMapper  extends YhBaseMapper<BizShipWorkPlanTemp> {
     @Select("SELECT " +
             "   A.*, " +
-            "   B.SHIP_NAME_CN AS shipNameCn, " +
-            "   B.SHIP_CODE AS shipCode, " +
-            "	B.REAL_TIME_BERTH AS berthNo, " +
-            "	B.VOYAGE_NO AS voyageNo, " +
-            "	B.BERTH_DIRECTION AS berthDirection, " +
-            "	B.BOLLARD_HEAD AS headBollardNo, " +
-            "	B.BOLLARD_TAIL AS tailBollardNo, " +
-            "	B.REAL_TIME_DRAFT AS draft, " +
-            "	B.BERTH_TIME AS berthTime, " +
-            "	B.STATUS AS status, " +
-            "	B.CARRY_WEIGHT AS carryWeight, " +
-            "	B.ALGORITHM_STATE AS algorithmState " +
+            "   B.SHIP_NAME_CN AS shipNameCn " +
             "FROM ALG_SHIP_WORK_PLAN_TEMP A LEFT JOIN ALG_SHIP_REAL_TIME B ON A.VOYAGE_NO = B.VOYAGE_NO " +
             "${ew.customSqlSegment}")
     List<BizShipWorkPlanTemp> queryList(@Param(Constants.WRAPPER) QueryWrapper<BizShipWorkPlanTemp> queryWrapper);
@@ -52,16 +41,7 @@ public interface BizShipWorkPlanTempMapper  extends YhBaseMapper<BizShipWorkPlan
             "\t\t( " +
             "SELECT " +
             "   A.*, " +
-            "   B.SHIP_NAME_CN AS shipNameCn, " +
-            "	B.REAL_TIME_BERTH AS berthNo, " +
-            "	B.VOYAGE_NO AS voyageNo, " +
-            "	B.BERTH_DIRECTION AS berthDirection, " +
-            "	B.BOLLARD_HEAD AS headBollardNo, " +
-            "	B.BOLLARD_TAIL AS tailBollardNo, " +
-            "	B.REAL_TIME_DRAFT AS draft, " +
-            "	B.BERTH_TIME AS berthTime, " +
-            "	B.STATUS AS status, " +
-            "	B.ALGORITHM_STATE AS algorithmState " +
+            "   B.SHIP_NAME_CN AS shipNameCn " +
             "FROM ALG_SHIP_WORK_PLAN_TEMP A LEFT JOIN ALG_SHIP_REAL_TIME B ON A.VOYAGE_NO = B.VOYAGE_NO " +
             "${ew.customSqlSegment}" +
             " ) TMP \n" +

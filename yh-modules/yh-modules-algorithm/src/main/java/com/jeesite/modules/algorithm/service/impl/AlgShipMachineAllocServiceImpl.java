@@ -1,6 +1,9 @@
 package com.jeesite.modules.algorithm.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.jeesite.common.utils.MybatisPlusUtils;
 import com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc;
+import com.jeesite.modules.algorithm.entity.AlgShipSiloArrange;
 import com.jeesite.modules.algorithm.mapper.AlgShipMachineAllocMapper;
 import com.jeesite.modules.algorithm.service.IAlgShipMachineAllocService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,5 +26,11 @@ public class AlgShipMachineAllocServiceImpl extends ServiceImpl<AlgShipMachineAl
     @Override
     public List<AlgShipMachineAlloc> listAfterWorkingFinishTime(LocalDateTime endTime) {
         return this.baseMapper.listAfterWorkingFinishTime(endTime);
+    }
+    @Override
+    public List<AlgShipMachineAlloc> queryList(AlgShipMachineAlloc algShipMachineAlloc) {
+        QueryWrapper<AlgShipMachineAlloc> queryWrapper = MybatisPlusUtils.getQueryWrapper(algShipMachineAlloc, null);
+        queryWrapper.eq(algShipMachineAlloc.getVoyageNo() != null, "VOYAGE_NO", algShipMachineAlloc.getVoyageNo());
+        return list(queryWrapper);
     }
 }

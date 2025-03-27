@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.jeesite.common.annotation.JhyjField;
 import com.jeesite.common.base.BaseEntity;
+import com.jeesite.modules.algorithm.enums.CargoWhereaboutsRequirementEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -250,7 +251,19 @@ public class BizShipForecast extends BaseEntity<BizShipForecast> {
     @JhyjField(eq = true)
     @Schema(description ="创建公司")
     private String createCompany;
+    /**
+     * 装卸要求（1直取|2存放）
+     * {@link CargoWhereaboutsRequirementEnum}
+     */
+    @TableField("CARGO_WHEREABOUTS")
+    private Integer cargoWhereabouts;
 
+    /**
+     * 疏港方式
+     * {@link com.jeesite.modules.algorithm.enums.CargoEvacuationEnum}
+     */
+    @TableField("CARGO_EVACUATION")
+    private Integer cargoEvacuation;
     /**
      * 算法状态
      */

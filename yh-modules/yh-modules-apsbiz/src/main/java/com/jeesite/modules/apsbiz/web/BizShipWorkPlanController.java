@@ -254,8 +254,8 @@ public class BizShipWorkPlanController {
                             }
 
                             // 缆柱
-                            if(StrUtil.isAllNotEmpty(obj.getHeadBollardNo(), obj.getTailBollardNo())){
-                                obj.setBollardNo(obj.getHeadBollardNo() + " - " + obj.getTailBollardNo());
+                            if(StrUtil.isAllNotEmpty(obj.getHeadBollardId(), obj.getTailBollardId())){
+                                obj.setBollardNo(obj.getHeadBollardId() + " - " + obj.getTailBollardId());
                             }
 
                             // 船长 船宽

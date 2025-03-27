@@ -46,7 +46,7 @@ public class BizShoreMachine extends BaseEntity<BizShoreMachine> {
      */
     @JhyjField(eq = true)
     @Schema(description ="  岸机类型编码 ")
-    private String machineCode;
+    private String machineTypeCode;
 
     /**
      *   岸机编号
@@ -55,12 +55,6 @@ public class BizShoreMachine extends BaseEntity<BizShoreMachine> {
     @Schema(description ="  岸机编号")
     private String machineNo;
 
-    /**
-     * 泊位编号
-     */
-    @JhyjField(eq = true)
-    @Schema(description ="泊位编号")
-    private String berthNo;
 
     /**
      * 被占用时间（截止时间）

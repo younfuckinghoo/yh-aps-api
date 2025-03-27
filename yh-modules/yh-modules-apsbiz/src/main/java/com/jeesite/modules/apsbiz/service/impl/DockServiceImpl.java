@@ -453,25 +453,19 @@ public class DockServiceImpl implements DockService {
     @Override
     public BizShipWorkPlanTemp getShipWorkPlanTemp(BizShipRealTime bizShipRealTime) {
         BizShipWorkPlanTemp bizShipWorkPlanTemp = new BizShipWorkPlanTemp();
-//        bizDailyWorkPlanTemp.setId(sysIdService.getId("ALG_DAILY_WORK_PLAN_TEMP"));
-//        bizShipWorkPlanTemp.setShipRealTimeId(bizShipRealTime.getId());
         bizShipWorkPlanTemp.setPlanTime(getPlanDate());
         bizShipWorkPlanTemp.setVoyageNo(bizShipRealTime.getVoyageNo());
-
-
+        bizShipWorkPlanTemp.setHeadBollardId(bizShipRealTime.getBollardHead());
+        bizShipWorkPlanTemp.setTailBollardId(bizShipRealTime.getBollardTail());
+        bizShipWorkPlanTemp.setBerthNo(bizShipRealTime.getRealTimeBerth());
+        bizShipWorkPlanTemp.setBerthDirection(bizShipRealTime.getBerthDirection());
         bizShipWorkPlanTemp.setPlanFinishTime(bizShipRealTime.getWorkingFinishTime());
+        bizShipWorkPlanTemp.setBerthTime(bizShipRealTime.getBerthTime());
+        bizShipWorkPlanTemp.setCarryWeight(bizShipRealTime.getCarryWeight());
         bizShipWorkPlanTemp.setThroughputWeight(RandomUtil.randomInt(1000,5000) + "");
         bizShipWorkPlanTemp.setRemainingWeight(RandomUtil.randomInt(1000,3000) + "");
         bizShipWorkPlanTemp.setWorkContent("工作内容" + System.currentTimeMillis());
-//        bizShipWorkPlanTemp.setNightWorkAmount(RandomUtil.randomInt(1000,3000) + "");
-//        bizShipWorkPlanTemp.setNightMachine("夜班机械"+System.currentTimeMillis());
-//        bizShipWorkPlanTemp.setNightPerson("夜班人员"+System.currentTimeMillis());
-//        bizShipWorkPlanTemp.setDayWorkAmount(RandomUtil.randomInt(1000,3000) + "");
-//        bizShipWorkPlanTemp.setDayMachine("夜班机械"+System.currentTimeMillis());
-//        bizShipWorkPlanTemp.setDayPerson("夜班人员"+System.currentTimeMillis());
-//        bizShipWorkPlanTemp.setCreator(UserUtils.getUser().getUserName());
-//        bizShipWorkPlanTemp.setCreateDate(new Date());
-
+        bizShipWorkPlanTemp.setAlgorithmState(AlgorithmEnum.STATE12.getStatus());
         return bizShipWorkPlanTemp;
     }
 
@@ -489,8 +483,6 @@ public class DockServiceImpl implements DockService {
                 ReflectUtil.setFieldValue(bizShipWorkPlan, field.getName(), val);
             }
         }
-//        bizDailyWorkPlan.setId(sysIdService.getId("ALG_DAILY_WORK_PLAN"));
-//        bizShipWorkPlan.setCreator(UserUtils.getUser().getUserName());
         return bizShipWorkPlan;
     }
     @Override

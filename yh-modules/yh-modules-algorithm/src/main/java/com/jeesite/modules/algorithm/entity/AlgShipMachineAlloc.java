@@ -28,7 +28,7 @@ public class AlgShipMachineAlloc implements Serializable {
     /**
      * 分配记录唯一ID
      */
-    @TableId(value = "ID",type = IdType.AUTO)
+    @TableId(value = "ID", type = IdType.ASSIGN_ID)
     private String id;
 
     /**

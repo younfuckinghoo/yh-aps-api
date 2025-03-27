@@ -25,4 +25,11 @@ public interface BizShipWorkPlanTempService  extends YhService<BizShipWorkPlanTe
      * @return
      */
     R submit(String ids);
+
+    /**
+     * 更新基础信息后，更新其他表的信息
+     * @param bizShipWorkPlanTemp
+     * @return
+     */
+    void updateOtherInfo(BizShipWorkPlanTemp bizShipWorkPlanTemp, BizShipWorkPlanTemp base);
 }

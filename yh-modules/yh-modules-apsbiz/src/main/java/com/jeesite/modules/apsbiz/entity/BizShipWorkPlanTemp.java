@@ -8,10 +8,15 @@ import com.jeesite.common.annotation.JhyjField;
 import com.jeesite.common.base.BaseEntity;
 import com.jeesite.common.utils.excel.annotation.ExcelField;
 import com.jeesite.common.utils.excel.annotation.ExcelFields;
+import com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc;
+import com.jeesite.modules.algorithm.entity.AlgShipSiloArrange;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
+import com.jeesite.modules.algorithm.entity.AlgShipYardArrange;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @TableName("ALG_SHIP_WORK_PLAN_TEMP")
@@ -184,10 +189,10 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     private String throughputWeight;
 
     /**
-     * 吞吐量
+     * 剩余吨数
      */
     @JhyjField(eq = true)
-    @Schema(description ="吞吐量")
+    @Schema(description ="剩余吨数")
     private String remainingWeight;
 
     /**
@@ -196,48 +201,12 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @JhyjField(eq = true)
     @Schema(description ="工作内容")
     private String workContent;
-
     /**
-     * 夜班-作业量
+     * 航次号
      */
-//    @JhyjField(eq = true)
-//    @Schema(description ="夜班作业量")
-//    private String nightWorkAmount;
-//
-//    /**
-//     * 夜班-机械配置
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="夜班-机械配置")
-//    private String nightMachine;
-//
-//    /**
-//     * 夜班-人力
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="夜班-人力")
-//    private String nightPerson;
-//
-//    /**
-//     * 白班-作业量
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="白班作业量")
-//    private String dayWorkAmount;
-//
-//    /**
-//     * 白班-机械配置
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="白班-机械配置")
-//    private String dayMachine;
-//
-//    /**
-//     * 白班-人力
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="白班-人力")
-//    private String dayPerson;
+    @JhyjField(eq = true)
+    @Schema(description ="航次号")
+    private String voyageNo;
 
     /**
      * 作业要求
@@ -246,35 +215,121 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @Schema(title ="作业要求")
     private String workRequire;
 
-//    /**
-//     * 创建人
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="创建人")
-//    private String creator;
-//
-//    /**
-//     * 创建时间
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="创建时间")
-//    private Date createDate;
-
-    /**
-     * 修改时间
-     */
-    @JhyjField(eq = true)
-    @Schema(description ="修改时间")
-    private Date reviseDate;
-
     /**
      * 算法状态
      */
 //    @JhyjField(eq = true)
-    @TableField(exist = false)
+    @JhyjField(eq = true)
     @Schema(title ="算法状态", description = "字典（APS_ALGORITHM_STATE）")
     private Integer algorithmState;
+    /**
+     * 靠泊要求
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="靠泊要求")
+    private Integer berthDirection;
+    /**
+     * 泊位
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="泊位")
+    private String berthNo;
+    @JhyjField(eq = true)
+    @Schema(description ="舱数")
+    private Integer cabinNum;
+    /**
+     * 配载(吨)
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="配载(吨)")
+    private Integer carryWeight;
+    /**
+     * 吃水
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="吃水")
+    private String draft;
 
+    // SHIP_INFO
+    @JhyjField(eq = true)
+    @Schema(description ="船长")
+    private String shipLength;
+
+    /**
+     * 船舶首部固定缆绳的缆桩编号
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="船舶首部固定缆绳的缆桩编号")
+    private String headBollardId;
+
+    /**
+     * 船舶尾部固定缆绳的缆桩编号
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="船舶尾部固定缆绳的缆桩编号")
+    private String tailBollardId;
+
+    /**
+     * 船舶注册名称
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="船舶注册名称")
+    private String shipName;
+    /**
+     * 货主
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="货主")
+    private String cargoOwner;
+
+    /**
+     * 装载货物名称
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="装载货物名称")
+    private String cargoName;
+
+
+    /**
+     * 船舶代理公司名称
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="船舶代理公司名称")
+    private String agent;
+    // SHIP_PLAN
+    @JhyjField(eq = true)
+    @Schema(description ="计划靠泊时间")
+    private Date planBerthTime;
+    /**
+     * 靠泊时间
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="靠泊时间")
+    private Date berthTime;
+    /**
+     * 班次作业计划
+     */
+    @TableField(exist = false)
+    @Schema(description ="班次作业计划")
+    private List<AlgShipWorkShiftTemp> shiftTempList;
+    /**
+     * 船舶作业筒仓安排
+     */
+    @TableField(exist = false)
+    @Schema(description ="船舶作业筒仓安排")
+    private List<AlgShipSiloArrange> siloList;
+    /**
+     * 船舶作业堆场安排
+     */
+    @TableField(exist = false)
+    @Schema(description ="船舶作业堆场安排")
+    private List<AlgShipYardArrange> yardList;
+    /**
+     * 船舶作业机械安排
+     */
+    @TableField(exist = false)
+    @Schema(description ="船舶作业机械安排")
+    private List<AlgShipMachineAlloc> machineList;
 
 ////仅供查询字段//////////////////////////////////////////////////
 
@@ -333,14 +388,6 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @Schema(description ="ID(IN查询)")
     private String idIn;
 
-
-    /**
-     * 在港ID(IN查询)
-     */
-//    @JhyjField(in = true, tableField = false, fieldName = "SHIP_REAL_TIME_ID")
-//    @TableField(exist = false)
-//    @Schema(description ="在港ID(IN查询)")
-//    private String shipRealTimeIdIn;
     /**
      * 在港ID(IN查询)
      */
@@ -348,7 +395,12 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="在港航次(IN查询)")
     private String voyageNoIn;
-
+    /**
+     * 装卸要求（1直取|2存放）
+     */
+    @TableField(exist = false)
+    @Schema(description ="装卸要求（1直取|2存放））")
+    private Integer cargoWhereabouts;
 ////仅供展示字段//////////////////////////////////////////////////
 
 // WORK_REAL_TIME
@@ -359,56 +411,12 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @Schema(description ="中文船名")
     private String shipNameCn;
 
-    /**
-     * 靠泊要求
-     */
-    @TableField(exist = false)
-    @Schema(description ="靠泊要求")
-    private Integer berthDirection;
 
-    /**
-     * 航次号
-     */
-    @TableField(exist = false)
-    @Schema(description ="航次号")
-    private String voyageNo;
 
-    /**
-     * 首榄桩
-     */
-    @TableField(exist = false)
-    @Schema(description ="首榄桩")
-    private String headBollardNo;
-
-    /**
-     * 尾榄桩
-     */
-    @TableField(exist = false)
-    @Schema(description ="尾榄桩")
-    private String tailBollardNo;
-
-    /**
-     * 吃水
-     */
-    @TableField(exist = false)
-    @Schema(description ="吃水")
-    private String draft;
-
-    /**
-     * 靠泊时间
-     */
-    @TableField(exist = false)
-    @Schema(description ="靠泊时间")
-    private Date berthTime;
 
 //    FORECAST
 
-    /**
-     * 货主
-     */
-    @TableField(exist = false)
-    @Schema(description ="货主")
-    private String cargoOwner;
+
 
     /**
      * 代理公司
@@ -431,14 +439,6 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @Schema(description ="创建公司")
     private String createCompany;
 
-
-    /**
-     * 配载(吨)
-     */
-    @TableField(exist = false)
-    @Schema(description ="配载(吨)")
-    private Integer carryWeight;
-
     /**
      * 货物小类代码
      */
@@ -452,25 +452,6 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="装卸货种")
     private String cargoTypeName;
-
-
-
-    // SHIP_INFO
-    @TableField(exist = false)
-    @Schema(description ="船长")
-    private String shipLength;
-
-    @TableField(exist = false)
-    @Schema(description ="舱数")
-    private Integer cabinNum;
-
-
-
-    // SHIP_PLAN
-    @TableField(exist = false)
-    @Schema(description ="计划靠泊时间")
-    private Date planBerthTime;
-
 
     /**
      * 泊位
@@ -487,16 +468,7 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @Schema(description ="缆柱")
     private String bollardNo;
 
-
-
 ////查询 + 展示字段//////////////////////////////////////////////////
-
-    /**
-     * 泊位
-     */
-    @TableField(exist = false)
-    @Schema(description ="泊位")
-    private String berthNo;
 
     /**
      * 船舶代码
@@ -504,44 +476,10 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="船舶代码")
     private String shipCode;
-
     /**
      * 当前状态
      */
     @TableField(exist = false)
     @Schema(description ="当前状态")
     private Integer status;
-
-
-    /**
-     * 船舶首部固定缆绳的缆桩编号
-     */
-    @TableField("HEAD_BOLLARD_ID")
-    private String headBollardId;
-
-    /**
-     * 船舶尾部固定缆绳的缆桩编号
-     */
-    @TableField("TAIL_BOLLARD_ID")
-    private String tailBollardId;
-
-    /**
-     * 船舶注册名称
-     */
-    @TableField("SHIP_NAME")
-    private String shipName;
-
-
-    /**
-     * 装载货物名称
-     */
-    @TableField("CARGO_NAME")
-    private String cargoName;
-
-
-    /**
-     * 船舶代理公司名称
-     */
-    @TableField("AGENT")
-    private String agent;
 }

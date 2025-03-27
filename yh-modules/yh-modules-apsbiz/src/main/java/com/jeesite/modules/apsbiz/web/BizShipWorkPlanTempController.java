@@ -3,12 +3,22 @@ package com.jeesite.modules.apsbiz.web;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jeesite.common.base.R;
 import com.jeesite.common.data.DataUtil;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.common.lang.DateUtils;
+import com.jeesite.common.utils.MybatisPlusUtils;
 import com.jeesite.common.utils.excel.ExcelExport;
+import com.jeesite.modules.algorithm.entity.AlgShipSiloArrange;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
+import com.jeesite.modules.algorithm.entity.AlgShipYardArrange;
+import com.jeesite.modules.algorithm.service.AlgShipForecastService;
+import com.jeesite.modules.algorithm.service.IAlgShipSiloArrangeService;
+import com.jeesite.modules.algorithm.service.IAlgShipWorkShiftTempService;
+import com.jeesite.modules.algorithm.service.IAlgShipYardArrangeService;
+import com.jeesite.modules.algorithm.service.impl.AlgShipWorkShiftTempServiceImpl;
 import com.jeesite.modules.apsbiz.entity.*;
 import com.jeesite.modules.apsbiz.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +28,8 @@ import lombok.AllArgsConstructor;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,7 +53,11 @@ public class BizShipWorkPlanTempController {
 
     private final DockService dockService;
 
+    private final IAlgShipWorkShiftTempService algShipWorkShiftTempService;
 
+    private final IAlgShipSiloArrangeService algShipSiloArrangeService;
+
+    private final IAlgShipYardArrangeService algShipYardArrangeService;
     /**
      * 分页查询
      * @param bizShipWorkPlanTemp (预)作业计划
@@ -65,19 +81,29 @@ public class BizShipWorkPlanTempController {
             pageRes.getRecords().forEach(obj -> {
                 if(StrUtil.isNotEmpty(obj.getVoyageNo())){
                     BizShipForecast bizShipForecast = bizShipForecastService.infoByVoyageNo(obj.getVoyageNo());
-
+                    AlgShipSiloArrange algShipSiloArrange = new AlgShipSiloArrange();
+                    algShipSiloArrange.setVoyageNo(obj.getVoyageNo());
+                    List<AlgShipSiloArrange> siloList = algShipSiloArrangeService.queryList(algShipSiloArrange);
+                    AlgShipYardArrange algShipyardArrange = new AlgShipYardArrange();
+                    algShipyardArrange.setVoyageNo(obj.getVoyageNo());
+                    List<AlgShipYardArrange> yardList = algShipYardArrangeService.queryList(algShipyardArrange);
+                    AlgShipWorkShiftTemp temp = new AlgShipWorkShiftTemp();
+                    temp.setShipWorkPlanId(obj.getId());
+                    List<AlgShipWorkShiftTemp> workShiftList = algShipWorkShiftTempService.queryList(temp);
+                    obj.setYardList(yardList);
+                    obj.setSiloList(siloList);
+                    obj.setShiftTempList(workShiftList);
                     if(null != bizShipForecast){
                         obj.setCarryWeight(bizShipForecast.getCarryWeight());
                         obj.setCargoSubTypeCode(bizShipForecast.getCargoSubTypeCode());
                         obj.setCargoTypeName(bizShipForecast.getCargoTypeName());
                         obj.setCargoOwner(bizShipForecast.getCargoOwner());
                         obj.setAgentCompany(bizShipForecast.getAgentCompany());
-
+                        obj.setCargoWhereabouts(bizShipForecast.getCargoWhereabouts());
                         BizShipPlan bizShipPlan = bizShipPlanService.getByForecastId(bizShipForecast.getId());
                         if(null != bizShipPlan){
                             obj.setPlanBerthTime(bizShipPlan.getPlanBerthTime());
                         }
-
                         BizShipInfo bizShipInfo = bizShipInfoService.infoByCode(bizShipForecast.getShipCode());
                         if(null != bizShipInfo){
                             obj.setShipLength(Convert.toStr(bizShipInfo.getShipLength()));
@@ -184,11 +210,8 @@ public class BizShipWorkPlanTempController {
         if(!AlgorithmEnum.STATE12.getStatus().equals(bizShipRealTime.getAlgorithmState())){
             return R.failed_biz("当前状态不可修改");
         }
-
-        // 维护不可更改项目
-        bizShipWorkPlanTemp.setVoyageNo(base.getVoyageNo());
-
         if(bizShipWorkPlanTempService.updateOrCleanById(bizShipWorkPlanTemp)){
+            bizShipWorkPlanTempService.updateOtherInfo(bizShipWorkPlanTemp, base);
             return R.ok();
         }
         return R.failed();
@@ -267,8 +290,8 @@ public class BizShipWorkPlanTempController {
                 }
 
                 // 缆柱
-                if (StrUtil.isAllNotEmpty(obj.getHeadBollardNo(), obj.getTailBollardNo())) {
-                    obj.setBollardNo(obj.getHeadBollardNo() + " - " + obj.getTailBollardNo());
+                if (StrUtil.isAllNotEmpty(obj.getHeadBollardId(), obj.getTailBollardId())) {
+                    obj.setBollardNo(obj.getHeadBollardId() + " - " + obj.getTailBollardId());
                 }
 
                 // 船长 船宽
