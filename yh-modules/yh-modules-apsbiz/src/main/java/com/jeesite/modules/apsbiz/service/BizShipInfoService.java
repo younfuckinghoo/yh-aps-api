@@ -13,4 +13,5 @@ import com.jeesite.modules.apsbiz.entity.BizShipInfo;
 public interface BizShipInfoService extends YhService<BizShipInfo> {
 	BizShipInfo infoByCode(String shipCode);
 	BizShipInfo infoByName(String shipName);
+	BizShipInfo infoByVoyageNo(String voyageNo);
 }

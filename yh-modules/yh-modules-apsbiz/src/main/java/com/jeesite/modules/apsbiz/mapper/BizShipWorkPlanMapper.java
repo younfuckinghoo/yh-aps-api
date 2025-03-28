@@ -13,7 +13,8 @@ import java.util.List;
 public interface BizShipWorkPlanMapper extends YhBaseMapper<BizShipWorkPlan> {
     @Select("SELECT " +
             "   A.*, " +
-            "   B.SHIP_NAME_CN AS shipNameCn " +
+            "   B.SHIP_NAME_CN AS shipNameCn, " +
+            "   B.STATUS AS status " +
             "FROM ALG_SHIP_WORK_PLAN A LEFT JOIN ALG_SHIP_REAL_TIME B ON A.VOYAGE_NO = B.VOYAGE_NO " +
             "${ew.customSqlSegment}")
     List<BizShipWorkPlan> queryList(@Param(Constants.WRAPPER) QueryWrapper<BizShipWorkPlan> queryWrapper);
@@ -40,7 +41,8 @@ public interface BizShipWorkPlanMapper extends YhBaseMapper<BizShipWorkPlan> {
             "\t\t( " +
             "SELECT " +
             "   A.*, " +
-            "   B.SHIP_NAME_CN AS shipNameCn " +
+            "   B.SHIP_NAME_CN AS shipNameCn, " +
+            "   B.STATUS AS status " +
             "FROM ALG_SHIP_WORK_PLAN A LEFT JOIN ALG_SHIP_REAL_TIME B ON A.VOYAGE_NO = B.VOYAGE_NO " +
             "${ew.customSqlSegment}" +
             " ) TMP \n" +

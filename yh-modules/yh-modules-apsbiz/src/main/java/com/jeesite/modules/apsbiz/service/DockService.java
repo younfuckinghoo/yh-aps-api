@@ -2,6 +2,8 @@ package com.jeesite.modules.apsbiz.service;
 
 
 import com.jeesite.common.base.R;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShift;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
 import com.jeesite.modules.apsbiz.entity.*;
 
 import java.util.Date;
@@ -89,7 +91,12 @@ public interface DockService {
 	 * @return
 	 */
 	BizShipWorkPlan getShipWorkPlan(BizShipWorkPlanTemp algShipWorkPlanTemp);
-
+	/**
+	 * 获取班次
+	 * @param tempList
+	 * @return
+	 */
+	List<AlgShipWorkShift> getAlgShipWorkShift(List<AlgShipWorkShiftTemp> tempList);
 	/**
 	 * 刷新在港船舶
 	 */

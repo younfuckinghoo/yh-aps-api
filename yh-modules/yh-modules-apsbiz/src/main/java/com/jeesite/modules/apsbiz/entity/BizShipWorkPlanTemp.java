@@ -254,7 +254,10 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @JhyjField(eq = true)
     @Schema(description ="船长")
     private String shipLength;
-
+    // 船宽
+    @TableField(exist = false)
+    @Schema(description ="船宽")
+    private String shipWidth;
     /**
      * 船舶首部固定缆绳的缆桩编号
      */
@@ -369,7 +372,21 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="完船时间（范围结束）")
     private Date planFinishimeEnd;
+    /**
+     * 计划日期（范围开始）
+     */
+    @JhyjField(datetimeGe = true, tableField = false, fieldName = "PLAN_TIME")
+    @TableField(exist = false)
+    @Schema(description ="计划日期（范围开始）")
+    private Date planTimeStart;
 
+    /**
+     * 计划日期（范围结束）
+     */
+    @JhyjField(datetimeLe = true, tableField = false, fieldName = "PLAN_TIME")
+    @TableField(exist = false)
+    @Schema(description ="计划日期（范围结束）")
+    private Date planTimeEnd;
 
     /**
      * 算法状态
@@ -410,14 +427,7 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="中文船名")
     private String shipNameCn;
-
-
-
-
 //    FORECAST
-
-
-
     /**
      * 代理公司
      */
@@ -452,7 +462,12 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="装卸货种")
     private String cargoTypeName;
-
+    /**
+     * 贸别
+     */
+    @TableField(exist = false)
+    @Schema(description ="贸别")
+    private Integer tradeType;
     /**
      * 泊位
      */
@@ -467,7 +482,12 @@ public class BizShipWorkPlanTemp extends BaseEntity<BizShipWorkPlanTemp> {
     @TableField(exist = false)
     @Schema(description ="缆柱")
     private String bollardNo;
-
+    /**
+     * 装卸类别(1装,2卸,3装卸)
+     */
+    @TableField(exist = false)
+    @Schema(description ="装卸类别(1装,2卸,3装卸)")
+    private Integer loadUnload;
 ////查询 + 展示字段//////////////////////////////////////////////////
 
     /**

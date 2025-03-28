@@ -42,7 +42,18 @@ public interface BizShipRealTimeService extends YhService<BizShipRealTime> {
      * @return
      */
     boolean updateStatus(Integer status, String join);
-
+    /**
+     * 修改状态
+     * @param status
+     * @param join
+     * @return
+     */
+    boolean updateStatusByVoyage(Integer status, String join);
+    /**
+     * 修改预排表里面的状态
+     * @return
+     */
+    boolean updateTempStatus(Integer status, String voyageNo);
     /**
      * 取消预排
      * @param id

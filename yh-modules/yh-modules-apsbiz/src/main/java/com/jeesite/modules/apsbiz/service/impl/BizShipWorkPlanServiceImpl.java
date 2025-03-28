@@ -8,11 +8,16 @@ import com.jeesite.common.base.R;
 import com.jeesite.common.base.YhServiceImpl;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.common.utils.MybatisPlusOracleUtils;
+import com.jeesite.common.utils.MybatisPlusUtils;
+import com.jeesite.modules.algorithm.entity.*;
+import com.jeesite.modules.algorithm.service.*;
 import com.jeesite.modules.apsbiz.entity.BizShipRealTime;
 import com.jeesite.modules.apsbiz.entity.BizShipWorkPlan;
+import com.jeesite.modules.apsbiz.entity.BizShipWorkPlanTemp;
 import com.jeesite.modules.apsbiz.mapper.BizShipWorkPlanMapper;
 import com.jeesite.modules.apsbiz.service.BizShipRealTimeService;
 import com.jeesite.modules.apsbiz.service.BizShipWorkPlanService;
+import com.jeesite.modules.apsbiz.service.BizShipWorkPlanTempService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -22,12 +27,24 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class BizShipWorkPlanServiceImpl extends YhServiceImpl<BizShipWorkPlanMapper, BizShipWorkPlan> implements BizShipWorkPlanService {
     @Resource
     @Lazy
     private BizShipRealTimeService bizShipRealTimeService;
+    @Resource
+    private IAlgShipWorkShiftService algShipWorkShiftService;
+
+    @Resource
+    private IAlgShipSiloArrangeService algShipSiloArrangeService;
+
+    @Resource
+    private IAlgShipYardArrangeService algShipYardArrangeService;
+
+    @Resource
+    private IAlgShipMachineAllocService algShipMachineAllocService;
     @Value("${default.page}")
     private Integer defPage;
 
@@ -123,11 +140,19 @@ public class BizShipWorkPlanServiceImpl extends YhServiceImpl<BizShipWorkPlanMap
 
         // 2. 删除 作业计划
         Boolean success = removeById(id);
-
+        BizShipWorkPlanTemp tempPlan = new BizShipWorkPlanTemp();
+        tempPlan.setVoyageNo(algShipWorkPlan.getVoyageNo());
+        AlgShipWorkShift algShipWorkShift = new AlgShipWorkShift();
+        algShipWorkShift.setShipWorkPlanId(algShipWorkPlan.getId());
+        List<AlgShipWorkShift> algShipWorkShiftList = algShipWorkShiftService.queryList(algShipWorkShift);
+        if(!algShipWorkShiftList.isEmpty()) {
+            success = success && algShipWorkShiftService.removeBatchByIds(algShipWorkShiftList);
+        }
         // 3. 修改 （预）作业计划 状态
         if(null != algShipRealTime){
             algShipRealTime.setAlgorithmState(AlgorithmEnum.STATE10.getStatus());
             success = success && bizShipRealTimeService.updateOrCleanById(algShipRealTime);
+            success = success && bizShipRealTimeService.updateTempStatus(AlgorithmEnum.STATE10.getStatus(), algShipWorkPlan.getVoyageNo());
         }
 
         if(!success){
@@ -138,4 +163,66 @@ public class BizShipWorkPlanServiceImpl extends YhServiceImpl<BizShipWorkPlanMap
         return R.ok();
 
     }
+    @Override
+    public void updateOtherInfo(BizShipWorkPlan bizShipWorkPlan, BizShipWorkPlan base) {
+        AlgShipSiloArrange algShipSiloArrange = new AlgShipSiloArrange();
+        algShipSiloArrange.setVoyageNo(base.getVoyageNo());
+        List<AlgShipSiloArrange> siloList = algShipSiloArrangeService.queryList(algShipSiloArrange);
+        AlgShipYardArrange algShipyardArrange = new AlgShipYardArrange();
+        algShipyardArrange.setVoyageNo(base.getVoyageNo());
+        List<AlgShipYardArrange> yardList = algShipYardArrangeService.queryList(algShipyardArrange);
+        AlgShipMachineAlloc machineAlloc = new AlgShipMachineAlloc();
+        machineAlloc.setVoyageNo(base.getVoyageNo());
+        List<AlgShipMachineAlloc> machineAllocList = algShipMachineAllocService.queryList(machineAlloc);
+        QueryWrapper<AlgShipWorkShift> queryWrapper = MybatisPlusUtils.getQueryWrapper(new AlgShipWorkShift(), null);
+        queryWrapper.eq("SHIP_WORK_PLAN_ID", base.getId());
+        if(algShipWorkShiftService.count(queryWrapper) == 0) {
+            List<AlgShipWorkShift> list = new ArrayList<>();
+            bizShipWorkPlan.getShiftList().forEach(item -> {
+                AlgShipWorkShift temp = new AlgShipWorkShift();
+                temp.setShipWorkPlanId(item.getShipWorkPlanId());
+                temp.setWorkload(item.getWorkload());
+                temp.setManpowerArrange(item.getManpowerArrange());
+                temp.setShiftType(item.getShiftType());
+                list.add(temp);
+            });
+            algShipWorkShiftService.saveBatch(list);
+        }else {
+            algShipWorkShiftService.updateBatchById(bizShipWorkPlan.getShiftList());
+        }
+        if(!siloList.equals(bizShipWorkPlan.getSiloList())) {
+            algShipSiloArrangeService.removeBatchByIds(siloList);
+            algShipSiloArrangeService.saveBatch(bizShipWorkPlan.getSiloList());
+        }
+        if(!yardList.equals(bizShipWorkPlan.getYardList())) {
+            algShipYardArrangeService.removeBatchByIds(yardList);
+            algShipYardArrangeService.saveBatch(bizShipWorkPlan.getYardList());
+        }
+        List<AlgShipMachineAlloc> deleteList = new ArrayList<>();
+        List<AlgShipMachineAlloc> updateList = new ArrayList<>();
+        List<AlgShipMachineAlloc> addList = new ArrayList<>();
+        machineAllocList.forEach(item -> {
+            if(bizShipWorkPlan.getMachineList().stream().noneMatch(i -> Objects.equals(i.getId(), item.getId()))) {
+                deleteList.add(item);
+            }
+        });
+        bizShipWorkPlan.getMachineList().forEach(item -> {
+            if(item.getId() == null) {
+                item.setVoyageNo(base.getVoyageNo());
+                addList.add(item);
+            }else {
+                updateList.add(item);
+            }
+        });
+        if(!addList.isEmpty()) {
+            algShipMachineAllocService.saveBatch(addList);
+        }
+        if(!updateList.isEmpty()) {
+            algShipMachineAllocService.updateBatchById(updateList);
+        }
+        if(!deleteList.isEmpty()) {
+            algShipMachineAllocService.removeBatchByIds(deleteList);
+        }
+    }
+
 }

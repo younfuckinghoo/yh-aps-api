@@ -8,10 +8,7 @@ import com.jeesite.common.annotation.JhyjField;
 import com.jeesite.common.base.BaseEntity;
 import com.jeesite.common.utils.excel.annotation.ExcelField;
 import com.jeesite.common.utils.excel.annotation.ExcelFields;
-import com.jeesite.modules.algorithm.entity.AlgShipMachineAlloc;
-import com.jeesite.modules.algorithm.entity.AlgShipSiloArrange;
-import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
-import com.jeesite.modules.algorithm.entity.AlgShipYardArrange;
+import com.jeesite.modules.algorithm.entity.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -254,7 +251,10 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
     @JhyjField(eq = true)
     @Schema(description ="船长")
     private String shipLength;
-
+    // 船宽
+    @TableField(exist = false)
+    @Schema(description ="船宽")
+    private String shipWidth;
     /**
      * 船舶首部固定缆绳的缆桩编号
      */
@@ -311,7 +311,7 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
      */
     @TableField(exist = false)
     @Schema(description ="班次作业计划")
-    private List<AlgShipWorkShiftTemp> shiftTempList;
+    private List<AlgShipWorkShift> shiftList;
     /**
      * 船舶作业筒仓安排
      */
@@ -368,7 +368,21 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
     @TableField(exist = false)
     @Schema(description ="完船时间（范围结束）")
     private Date planFinishimeEnd;
+    /**
+     * 计划日期（范围开始）
+     */
+    @JhyjField(datetimeGe = true, tableField = false, fieldName = "PLAN_TIME")
+    @TableField(exist = false)
+    @Schema(description ="计划日期（范围开始）")
+    private Date planTimeStart;
 
+    /**
+     * 计划日期（范围结束）
+     */
+    @JhyjField(datetimeLe = true, tableField = false, fieldName = "PLAN_TIME")
+    @TableField(exist = false)
+    @Schema(description ="计划日期（范围结束）")
+    private Date planTimeEnd;
 
     /**
      * 算法状态
@@ -446,7 +460,12 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
     @TableField(exist = false)
     @Schema(description ="装卸货种")
     private String cargoTypeName;
-
+    /**
+     * 贸别
+     */
+    @TableField(exist = false)
+    @Schema(description ="贸别")
+    private Integer tradeType;
     /**
      * 泊位
      */
@@ -461,7 +480,12 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
     @TableField(exist = false)
     @Schema(description ="缆柱")
     private String bollardNo;
-
+    /**
+     * 装卸类别(1装,2卸,3装卸)
+     */
+    @TableField(exist = false)
+    @Schema(description ="装卸类别(1装,2卸,3装卸)")
+    private Integer loadUnload;
 ////查询 + 展示字段//////////////////////////////////////////////////
 
     /**
@@ -476,6 +500,5 @@ public class BizShipWorkPlan extends BaseEntity<BizShipPlan> {
     @TableField(exist = false)
     @Schema(description ="当前状态")
     private Integer status;
-
 
 }
