@@ -6,6 +6,8 @@ import com.jeesite.modules.algorithm.service.IAlgBeltProcessOccService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * <p>
  * 船舶作业皮带占用表，记录船舶占用的皮带流程 服务实现类
@@ -17,4 +19,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AlgBeltProcessOccServiceImpl extends ServiceImpl<AlgBeltProcessOccMapper, AlgBeltProcessOcc> implements IAlgBeltProcessOccService {
 
+    @Override
+    public List<AlgBeltProcessOcc> listAdditonalQueryColumns() {
+        return this.baseMapper.listAdditonalQueryColumns();
+    }
 }

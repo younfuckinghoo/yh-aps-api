@@ -7,6 +7,7 @@ import lombok.Data;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class WorkPlanShoreMachineDO implements Cloneable {
 
     public WorkPlanShoreMachineDO(@NotNull AlgShoreMachine algShoreMachine, List<WorkPlanShipMachineAllocDO> algShipMachineAllocSegments) {
         this.algShoreMachine = algShoreMachine;
-        this.algShipMachineAllocSegments = algShipMachineAllocSegments == null ? new ArrayList<>() : algShipMachineAllocSegments;
+        this.algShipMachineAllocSegments = algShipMachineAllocSegments == null ? new ArrayList<>() : algShipMachineAllocSegments.stream().sorted(Comparator.comparing(t->t.getEndTime())).toList();
     }
 
 

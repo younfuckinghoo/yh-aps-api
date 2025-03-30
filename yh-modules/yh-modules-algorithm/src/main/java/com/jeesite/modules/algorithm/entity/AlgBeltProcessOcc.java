@@ -3,6 +3,8 @@ package com.jeesite.modules.algorithm.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,4 +34,11 @@ public class AlgBeltProcessOcc implements Serializable {
      */
     @TableField("OCCUPIED_PROCESS_NO")
     private String occupiedProcessNo;
+
+
+    @TableField(exist = false)
+    private LocalDateTime startTime;
+
+    @TableField(exist = false)
+    private LocalDateTime endTime;
 }

@@ -2,4 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.jeesite.modules.algorithm.mapper.AlgBeltProcessOccMapper">
 
+    <select id="listAdditonalQueryColumns" resultType="com.jeesite.modules.algorithm.entity.AlgBeltProcessOcc">
+        SELECT a.*, b.PLAN_START_TIME as START_TIME, b.PLAN_FINISH_TIME as END_TIME
+        from ALG_BELT_PROCESS_OCC a
+                 left join ALG_SHIP_PLAN b on a.VOYAGE_NO = b.SHIP_FORECAST_ID
+    </select>
 </mapper>

@@ -130,6 +130,8 @@ public class WorkPlanMachinePool implements Cloneable {
             result.add(workPlanShipMachineAllocDO);
         }
 
+        // 设置船的机械占用
+        workPlanShipDO.setAlgShipMachineAllocList(result.stream().map(t->t.getAlgShipMachineAlloc()).toList());
 
 
         return result;

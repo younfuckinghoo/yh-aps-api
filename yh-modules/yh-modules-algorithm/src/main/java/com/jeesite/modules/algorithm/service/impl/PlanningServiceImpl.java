@@ -9,6 +9,8 @@ import com.jeesite.modules.algorithm.base.CommonConstant;
 import com.jeesite.modules.algorithm.base.MutableLocalDateTime;
 import com.jeesite.modules.algorithm.domain.*;
 import com.jeesite.modules.algorithm.entity.*;
+import com.jeesite.modules.algorithm.enums.CargoWhereaboutsRequirementEnum;
+import com.jeesite.modules.algorithm.enums.LoadUnloadEnum;
 import com.jeesite.modules.algorithm.enums.MachineClassEnum;
 import com.jeesite.modules.algorithm.feign.client.DmsClientService;
 import com.jeesite.modules.algorithm.planning.PlanningContext;
@@ -81,6 +83,19 @@ public class PlanningServiceImpl implements IPlanningService {
     private  IAlgShipSiloArrangeService algShipSiloArrangeService;
     @Resource
     private  IAlgShipYardArrangeService algShipYardArrangeService;
+    @Resource
+    private  IAlgYardBerthRelService algYardBerthRelService;
+    @Resource
+    private  IAlgSiloBerthRelService algSiloBerthRelService;
+    @Resource
+    private  IAlgSiloBaseService algSiloBaseService;
+    @Resource
+    private  IAlgYardService algYardService;
+    @Resource
+    private  IAlgBeltProcessService algBeltProcessService;
+    @Resource
+    private  IAlgBeltProcessOccService algBeltProcessOccService;
+
 
 
 
@@ -349,9 +364,9 @@ public class PlanningServiceImpl implements IPlanningService {
     public R generateWorkPlan() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime  = now.withHour(18).withMinute(0).withSecond(0).withNano(0);
-        if (now.getHour()>10){
-            startTime = startTime.plusDays(1);
-        }
+//        if (now.getHour()>18){
+//            startTime = startTime.plusDays(1);
+//        }
 
         WorkPlanContext workPlanContext = new WorkPlanContext();
         // 货种
@@ -363,10 +378,17 @@ public class PlanningServiceImpl implements IPlanningService {
 
         WorkPlanMachinePool machinePool = this.createMachinePool(workPlanContext, now);
 
+        WorkPlanYardPool workPlanYardPool = this.createYardPool(workPlanContext);
+
+        WorkPlanSiloPool workPlanSiloPool = this.createSiloPool(workPlanContext);
+
+        WorkPlanFlowPool workPlanFlowPool = this.createFlowPool(workPlanContext);
+
         for (WorkPlanShipDO workPlanShipDO : shipDoList) {
             AlgShipPlan algShipPlan = workPlanShipDO.getAlgShipPlan();
+            AlgShipForecast shipForecast = workPlanShipDO.getShipForecast();
             AlgShipRealTime shipRealTime = workPlanShipDO.getAlgShipRealTime();
-
+            // 确定机械效率
             BigDecimal effi = this.mappingEfficiency(workPlanShipDO, workPlanContext);
 
             // 判断是否是未做计划的
@@ -375,41 +397,100 @@ public class PlanningServiceImpl implements IPlanningService {
             BigDecimal leftWeight = workPlanShipDO.getThroughputWeight();
             // 如果已经有计划说明已经开始作业了 减去已经完成作业量
             if (hasPlanned) {
-                BigDecimal realProgress = shipRealTime.getRealProgress();
-                leftWeight = leftWeight.subtract(realProgress);
-                // 如果计划开始时间大于11点 那么预期将要完成的作业量为之前预估的量 剩余工作量为上一次预估的剩余工作量
-                if (algShipPlan.getPlanStartTime().isAfter(now.withHour(11).withMinute(0).withSecond(0).withNano(0))) {
+                // 如果当前时间小于11点 则没有上报实际进度 估计下一昼夜的工作量为上一个昼夜计划预估的剩余工作量
+                if(now.getHour()<11){
                     leftWeight = workPlanShipDO.getPreviousWorkPlan().getRemainingWeight();
-                } else {
-                    // 如果已经作业了 则需要减去11点到18点的预估作业量
-                    BigDecimal delta = BigDecimal.valueOf(18 - 11).multiply(effi);
-                    leftWeight = leftWeight.subtract(delta);
+                }else{// 当前时间在11点之后的情况
+
+                    // 如果计划开始时间大于今天11点 上报实际工作量时肯定不会报 那么预期将要完成的作业量为之前预估的量 剩余工作量为上一次预估的剩余工作量
+                    if (algShipPlan.getPlanStartTime().isAfter(LocalDateTime.of(now.toLocalDate(), LocalTime.of(11, 0)))) {
+                        leftWeight = workPlanShipDO.getPreviousWorkPlan().getRemainingWeight();
+                    } else {
+                        //如果今天11点之前已经开工了 当前时间还在11点之后 则需要参考实际进度 在进行计算剩余工作量
+                        BigDecimal realProgress = shipRealTime.getRealProgress();
+                        leftWeight = leftWeight.subtract(realProgress);
+                        // 如果已经作业了 则需要减去11点到18点的预估作业量
+                        BigDecimal delta = BigDecimal.valueOf(18 - 11).multiply(effi);
+                        leftWeight = leftWeight.subtract(delta);
+                    }
+
                 }
+
             }
-            //
 
 
             // 确定开始时间
-            // 确定机械效率
+            LocalDateTime shipStartTime;
+                // 已做计划
+            if (hasPlanned) {
+                // 开始时间 今天18:00
+                shipStartTime = startTime.plusMinutes(0);
+            } else {
+            // 未做计划
+                // 开始时间 船舶计划开始时间
+                shipStartTime = workPlanShipDO.getAlgShipPlan().getPlanStartTime();
+
+            }
+            // 如果之前没计划过 则匹配机械、堆场、筒仓
+            if (!hasPlanned){
             // 匹配机械 生成机械占用
-            // 根据泊位-货种-装卸要求-疏港方式 确定货物如何存放（堆场|筒仓|无） 生成筒仓|堆场占用 更新占用容量 可用容量
+                List<WorkPlanShipMachineAllocDO> workPlanShipMachineAllocDOS = machinePool.assignMachineForShip(workPlanShipDO);
+                // 根据泊位-货种-装卸要求-疏港方式 确定货物如何存放（堆场|筒仓|无） 生成筒仓|堆场占用 更新占用容量 可用容量
+                String berthNo = workPlanShipDO.getAlgShipPlan().getBerthNo();
+                switch (berthNo){
+                    case "802" -> {
+                        // shipForecast
+                        if(workPlanShipDO.getLoadUnloadEnum()== LoadUnloadEnum.UNLOAD){
+                            // 不管是木片还是粮食卸船存放 需要匹配堆场
+                            if (CargoWhereaboutsRequirementEnum.STORE.getCode() == shipForecast.getCargoWhereabouts()) {
+
+                            }else {
+                                // 直取不用管
+                            }
+                        }else {
+                            // 卸船不用管
+                        }
+                    }
+                    case "803" -> {
+                        if(workPlanShipDO.getLoadUnloadEnum()== LoadUnloadEnum.UNLOAD){
+                            // 不管是木片还是粮食卸船存放 需要匹配堆场
+                            if (CargoWhereaboutsRequirementEnum.STORE.getCode() == shipForecast.getCargoWhereabouts()) {
+                                if ("木材".equals(workPlanShipDO.getCargoType().getTypeName())){
+                                    // 木材只能存放到堆场
+                                }else if ("粮食".equals(workPlanShipDO.getCargoType().getTypeName())){
+                                    if ("中储粮".equals(workPlanShipDO.getCargoOwner().getOwnerShortName())){
+                                        // 储备粮放2、3号库
+                                        workPlanYardPool.mappingShipSiloList(workPlanShipDO, "2","3");
+                                    }else {
+                                        // 可以放2号库南，罐包站南和北；优先露天堆场 2B-1、3B-1，可以流程放北边二期22个筒仓
+                                        // 其他货主只能存放到堆场
+                                    }
+                                }
+                            }else {
+                                // 直取不用管
+                            }
+                        }else {
+                            // 卸船不用管
+                        }
+                    }
+                    case "805" -> {
+                    }
+                    case "806" -> {
+                    }
+                    case "509" -> {
+                    }
+                }
+
+
+            }
+
+
 
             // 生辰作业计划
             // 生成作业班次
 
 
-            LocalDateTime endTime;
-            // 未做计划
-            if (!hasPlanned) {
-                // 开始时间 船舶计划开始时间
-                startTime = workPlanShipDO.getAlgShipPlan().getPlanStartTime();
 
-
-            } else {
-                // 已做计划
-                // 开始时间 今天18:00
-
-            }
 
 
             AlgShipRealTime algShipRealTime = workPlanShipDO.getAlgShipRealTime();
@@ -420,6 +501,42 @@ public class PlanningServiceImpl implements IPlanningService {
 
 
         return null;
+    }
+
+    private WorkPlanFlowPool createFlowPool(WorkPlanContext workPlanContext) {
+
+        List<AlgBeltProcess> algBeltProcessList = this.algBeltProcessService.list();
+
+        List<AlgBeltProcessOcc> processOccList = this.algBeltProcessOccService.listAdditonalQueryColumns();
+
+        Map<String, List<AlgBeltProcessOcc>> collect = processOccList.stream().collect(Collectors.groupingBy(AlgBeltProcessOcc::getOccupiedProcessNo));
+
+        List<WorkPlanBeltProcessDO> list = algBeltProcessList.stream().map(t -> {
+            WorkPlanBeltProcessDO workPlanBeltProcessDO = new WorkPlanBeltProcessDO(t, collect.get(t.getProcessNo()));
+            return workPlanBeltProcessDO;
+        }).toList();
+
+        WorkPlanFlowPool workPlanFlowPool = new WorkPlanFlowPool(workPlanContext, list);
+
+        return workPlanFlowPool;
+
+    }
+
+    private WorkPlanSiloPool createSiloPool(WorkPlanContext workPlanContext) {
+        List<AlgSiloBase> siloBaseList = this.algSiloBaseService.list();
+        List<AlgSiloBerthRel> algSiloBerthRelList = this.algSiloBerthRelService.list();
+        WorkPlanSiloPool workPlanSiloPool = new WorkPlanSiloPool(workPlanContext, siloBaseList, algSiloBerthRelList);
+        return workPlanSiloPool;
+
+    }
+
+    private WorkPlanYardPool createYardPool(WorkPlanContext workPlanContext) {
+
+        List<AlgYard> algYardList = this.algYardService.list();
+        List<AlgYardBerthRel> algYardBerthRelList = this.algYardBerthRelService.list();
+        WorkPlanYardPool workPlanYardPool = new WorkPlanYardPool(workPlanContext, algYardList, algYardBerthRelList);
+        return workPlanYardPool;
+
     }
 
     private BigDecimal mappingEfficiency(WorkPlanShipDO workPlanShipDO, WorkPlanContext workPlanContext) {

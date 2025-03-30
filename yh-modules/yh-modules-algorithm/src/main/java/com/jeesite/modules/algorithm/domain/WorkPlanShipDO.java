@@ -64,6 +64,11 @@ public class WorkPlanShipDO {
      */
     List<AlgShipMachineAlloc> algShipMachineAllocList;
 
+    /**
+     *  皮带流程占用
+     */
+    List<AlgBeltProcessOcc> beltProcessOccList;
+
 
     public void setShipForecast(AlgShipForecast shipForecast) {
         this.shipForecast = shipForecast;
@@ -134,4 +139,7 @@ public class WorkPlanShipDO {
     }
 
 
+    public void setBeltProcessOccList(List<AlgBeltProcessOcc> beltProcessOccList) {
+        this.beltProcessOccList = beltProcessOccList;
+    }
 }
