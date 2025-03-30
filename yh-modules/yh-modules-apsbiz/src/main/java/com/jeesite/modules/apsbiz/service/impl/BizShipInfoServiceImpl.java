@@ -33,4 +33,11 @@ public class BizShipInfoServiceImpl extends YhServiceImpl<BizShipInfoMapper, Biz
 		QueryWrapper<BizShipInfo> queryWrapper = MybatisPlusUtils.getQueryWrapper(form, null);
 		return getOne(queryWrapper);
 	}
+	@Override
+	public BizShipInfo infoByVoyageNo(String voyageNo) {
+		BizShipInfo form = new BizShipInfo();
+		form.setVoyageNo(voyageNo);
+		QueryWrapper<BizShipInfo> queryWrapper = MybatisPlusUtils.getQueryWrapper(form, null);
+		return getOne(queryWrapper);
+	}
 }

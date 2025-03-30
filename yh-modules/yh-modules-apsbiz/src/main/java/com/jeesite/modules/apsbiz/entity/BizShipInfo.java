@@ -34,12 +34,12 @@ public class BizShipInfo extends BaseEntity<BizShipInfo> {
     @Schema(description ="id")
     private String id;
 
-//    /**
-//     * 来港航次
-//     */
-//    @JhyjField(eq = true)
-//    @Schema(description ="来港航次")
-//    private String voyageNo;
+    /**
+     * 来港航次
+     */
+    @JhyjField(eq = true)
+    @Schema(description ="来港航次")
+    private String voyageNo;
 
     /**
      * 船舶代码

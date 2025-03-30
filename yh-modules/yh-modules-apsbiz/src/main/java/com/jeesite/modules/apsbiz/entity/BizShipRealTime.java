@@ -369,5 +369,14 @@ public class BizShipRealTime extends BaseEntity<BizShipRealTime> {
     @TableField(exist = false)
     private Integer tradeType;
 
-
+    @TableField(exist = false)
+    @Schema(description ="船长")
+    private Float shipLength;
+    // 船宽
+    @TableField(exist = false)
+    @Schema(description ="船宽")
+    private Float shipWidth;
+    @TableField(exist = false)
+    @Schema(description ="舱数")
+    private Integer cabinNum;
 }

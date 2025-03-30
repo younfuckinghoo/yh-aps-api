@@ -2,6 +2,7 @@ package com.jeesite.modules.apsbiz.web;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jeesite.common.base.R;
@@ -9,6 +10,8 @@ import com.jeesite.common.data.DataUtil;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.common.lang.DateUtils;
 import com.jeesite.common.utils.excel.ExcelExport;
+import com.jeesite.modules.algorithm.entity.*;
+import com.jeesite.modules.algorithm.service.*;
 import com.jeesite.modules.apsbiz.entity.*;
 import com.jeesite.modules.apsbiz.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +21,7 @@ import lombok.AllArgsConstructor;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,7 +44,12 @@ public class BizShipWorkPlanController {
     private final BizBerthInfoService bizBerthInfoService;
 
     private final DockService dockService;
+    private final IAlgShipWorkShiftService algShipWorkShiftService;
 
+    private final IAlgShipSiloArrangeService algShipSiloArrangeService;
+
+    private final IAlgShipYardArrangeService algShipYardArrangeService;
+    private final IAlgShipMachineAllocService algShipMachineAllocService;
     /**
      * 分页查询
      * @param bizShipWorkPlan 作业计划
@@ -61,14 +70,30 @@ public class BizShipWorkPlanController {
         if(CollUtil.isNotEmpty(pageRes.getRecords())){
             pageRes.getRecords().forEach(obj -> {
                 BizShipForecast bizShipForecast = bizShipForecastService.infoByVoyageNo(obj.getVoyageNo());
-
+                AlgShipSiloArrange algShipSiloArrange = new AlgShipSiloArrange();
+                algShipSiloArrange.setVoyageNo(obj.getVoyageNo());
+                List<AlgShipSiloArrange> siloList = algShipSiloArrangeService.queryList(algShipSiloArrange);
+                AlgShipYardArrange algShipyardArrange = new AlgShipYardArrange();
+                algShipyardArrange.setVoyageNo(obj.getVoyageNo());
+                List<AlgShipYardArrange> yardList = algShipYardArrangeService.queryList(algShipyardArrange);
+                AlgShipWorkShift shipWorkShift = new AlgShipWorkShift();
+                shipWorkShift.setShipWorkPlanId(obj.getId());
+                List<AlgShipWorkShift> workShiftList = algShipWorkShiftService.queryList(shipWorkShift);
+                AlgShipMachineAlloc machineAlloc = new AlgShipMachineAlloc();
+                machineAlloc.setVoyageNo(obj.getVoyageNo());
+                List<AlgShipMachineAlloc> machineAllocList = algShipMachineAllocService.queryList(machineAlloc);
+                obj.setYardList(yardList);
+                obj.setSiloList(siloList);
+                obj.setShiftList(workShiftList);
+                obj.setMachineList(machineAllocList);
                 if(null != bizShipForecast){
                     obj.setCarryWeight(bizShipForecast.getCarryWeight());
                     obj.setCargoSubTypeCode(bizShipForecast.getCargoSubTypeCode());
                     obj.setCargoTypeName(bizShipForecast.getCargoTypeName());
                     obj.setCargoOwner(bizShipForecast.getCargoOwner());
                     obj.setAgentCompany(bizShipForecast.getAgentCompany());
-
+                    obj.setTradeType(bizShipForecast.getTradeType());
+                    obj.setLoadUnload(bizShipForecast.getLoadUnload());
                     BizShipPlan bizShipPlan = bizShipPlanService.getByForecastId(bizShipForecast.getId());
                     if(null != bizShipPlan){
                         obj.setPlanBerthTime(bizShipPlan.getPlanBerthTime());
@@ -77,12 +102,35 @@ public class BizShipWorkPlanController {
                     BizShipInfo bizShipInfo = bizShipInfoService.infoByCode(bizShipForecast.getShipCode());
                     if(null != bizShipInfo){
                         obj.setShipLength(Convert.toStr(bizShipInfo.getShipLength()));
+                        obj.setShipWidth(Convert.toStr(bizShipInfo.getShipWidth()));
                         obj.setCabinNum(bizShipInfo.getCabinNum());
                     }
                 }
             });
         }
         return R.ok(pageRes);
+    }
+    /**
+     * 新增作业计划
+     * @param bizShipWorkPlan 作业计划
+     * @return R
+     */
+    @Operation(summary = "新增作业计划")
+    @PostMapping
+    @RequiresPermissions("apsbiz:workplan:add")
+    public R addPlan(@RequestBody BizShipWorkPlan bizShipWorkPlan) {
+        BizShipRealTime bizShipRealTime = bizShipRealTimeService.infoByVoyageNo(bizShipWorkPlan.getVoyageNo());
+        if(null == bizShipRealTime){
+            return R.failed_null("id");
+        }
+        bizShipRealTime.setAlgorithmState(AlgorithmEnum.STATE14.getStatus());
+        bizShipWorkPlan.setPlanTime(DateUtil.beginOfDay(new Date()));
+        if(bizShipWorkPlanService.save(bizShipWorkPlan)){
+            bizShipRealTimeService.updateOrCleanById(bizShipRealTime);
+            bizShipWorkPlanService.updateOtherInfo(bizShipWorkPlan, bizShipWorkPlan);
+            return R.ok();
+        }
+        return R.failed();
     }
 
     /**
@@ -106,10 +154,9 @@ public class BizShipWorkPlanController {
         if(null == bizShipRealTime){
             return R.failed_null("id");
         }
-        // 维护不可更改项目
-        bizShipWorkPlan.setVoyageNo(base.getVoyageNo());
 
         if(bizShipWorkPlanService.updateOrCleanById(bizShipWorkPlan)){
+            bizShipWorkPlanService.updateOtherInfo(bizShipWorkPlan, base);
             return R.ok();
         }
         return R.failed();
@@ -145,7 +192,9 @@ public class BizShipWorkPlanController {
 
         // 4. 锁定 作业计划
         bizShipRealTime.setAlgorithmState(AlgorithmEnum.STATE15.getStatus());
+        bizShipWorkPlan.setAlgorithmState(AlgorithmEnum.STATE15.getStatus());
         if(bizShipRealTimeService.updateOrCleanById(bizShipRealTime)){
+            bizShipWorkPlanService.updateOrCleanById(bizShipWorkPlan);
             return R.ok();
         }
         return R.failed();
@@ -181,7 +230,9 @@ public class BizShipWorkPlanController {
 
         // 4. 取消锁定 作业计划
         bizShipRealTime.setAlgorithmState(AlgorithmEnum.STATE14.getStatus());
+        bizShipWorkPlan.setAlgorithmState(AlgorithmEnum.STATE14.getStatus());
         if(bizShipRealTimeService.updateOrCleanById(bizShipRealTime)){
+            bizShipWorkPlanService.updateOrCleanById(bizShipWorkPlan);
             return R.ok();
         }
         return R.failed();

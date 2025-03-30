@@ -224,4 +224,24 @@ public class BizShipRealTimeServiceImpl extends YhServiceImpl<BizShipRealTimeMap
         updateWrapper.set("ALGORITHM_STATE", status);
         return update(updateWrapper);
     }
+    @Override
+    public boolean updateStatusByVoyage(Integer status, String voyageNos) {
+        if(StrUtil.isEmpty(voyageNos)){
+            return true;
+        }
+        UpdateWrapper<BizShipRealTime> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.in("VOYAGE_NO", StrUtil.split(voyageNos, ","));
+        updateWrapper.set("ALGORITHM_STATE", status);
+        return update(updateWrapper);
+    }
+    @Override
+    public boolean updateTempStatus(Integer status, String voyageNo) {
+        if(StrUtil.isEmpty(voyageNo)){
+            return true;
+        }
+        UpdateWrapper<BizShipWorkPlanTemp> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.in("VOYAGE_NO", voyageNo);
+        updateWrapper.set("ALGORITHM_STATE", status);
+        return bizShipWorkPlanTempService.update(updateWrapper);
+    }
 }

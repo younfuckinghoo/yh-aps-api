@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jeesite.common.base.R;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.modules.apsbiz.entity.BizShipForecast;
+import com.jeesite.modules.apsbiz.entity.BizShipInfo;
 import com.jeesite.modules.apsbiz.entity.BizShipRealTime;
 import com.jeesite.modules.apsbiz.service.BizShipForecastService;
+import com.jeesite.modules.apsbiz.service.BizShipInfoService;
 import com.jeesite.modules.apsbiz.service.BizShipRealTimeService;
 import com.jeesite.modules.apsbiz.service.DockService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -35,7 +38,7 @@ public class AlgShipRealTimeController {
     private final BizShipRealTimeService bizShipRealTimeService;
 
     private final BizShipForecastService bizShipForecastService;
-
+    private final BizShipInfoService bizShipInfoService;
     private final DockService dockService;
 
     /**
@@ -64,11 +67,40 @@ public class AlgShipRealTimeController {
                 shipRealTime.setCargoTypeName(bizShipForecast.getCargoTypeName());
                 shipRealTime.setCargoOwner(bizShipForecast.getCargoOwner());
                 shipRealTime.setTradeType(bizShipForecast.getTradeType());
+
             }
         }
         return R.ok(ipage);
     }
+    @Operation(summary = "全部查询")
+    @GetMapping("/list")
+    @RequiresPermissions("apsbiz:shiprealtime:view")
+    public R getAlgShipRealTimeList(BizShipRealTime bizShipRealTime) {
+        // 未完成工作（审核）
+        bizShipRealTime.setIsFinish(0);
+        // 审核通过（过滤）
+//        bizShipRealTime.setForecastAlgorithmState(AlgorithmEnum.STATE6.getStatus());
 
+        List<BizShipRealTime> list = bizShipRealTimeService.queryList(bizShipRealTime);
+
+        for(BizShipRealTime shipRealTime : list){
+            BizShipForecast bizShipForecast = bizShipForecastService.infoByVoyageNo(shipRealTime.getVoyageNo());
+            if(null != bizShipForecast){
+                shipRealTime.setWorkingCompany(bizShipForecast.getWorkingCompany());
+                shipRealTime.setAgentCompany(bizShipForecast.getAgentCompany());
+                shipRealTime.setCargoTypeName(bizShipForecast.getCargoTypeName());
+                shipRealTime.setCargoOwner(bizShipForecast.getCargoOwner());
+                shipRealTime.setTradeType(bizShipForecast.getTradeType());
+            }
+            BizShipInfo bizShipInfo =  bizShipInfoService.infoByVoyageNo(shipRealTime.getVoyageNo());
+            if(null != bizShipInfo) {
+                shipRealTime.setShipLength(bizShipInfo.getShipLength());
+                shipRealTime.setShipWidth(bizShipInfo.getShipWidth());
+                shipRealTime.setCabinNum(bizShipInfo.getCabinNum());
+            }
+        }
+        return R.ok(list);
+    }
     /**
      * 预排
      * @param ids 船期ID集合

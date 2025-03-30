@@ -13,6 +13,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.jeesite.common.base.R;
 import com.jeesite.common.enum1.AlgorithmEnum;
 import com.jeesite.common.enum1.ShipStatusEnum;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShift;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
 import com.jeesite.modules.apsbiz.entity.*;
 import com.jeesite.modules.apsbiz.service.*;
 import com.jeesite.modules.apsbiz.utils.algorithm.Rectangle;
@@ -466,6 +468,7 @@ public class DockServiceImpl implements DockService {
         bizShipWorkPlanTemp.setRemainingWeight(RandomUtil.randomInt(1000,3000) + "");
         bizShipWorkPlanTemp.setWorkContent("工作内容" + System.currentTimeMillis());
         bizShipWorkPlanTemp.setAlgorithmState(AlgorithmEnum.STATE12.getStatus());
+        bizShipWorkPlanTemp.setDraft(String.valueOf(bizShipRealTime.getRealTimeDraft()));
         return bizShipWorkPlanTemp;
     }
 
@@ -484,6 +487,25 @@ public class DockServiceImpl implements DockService {
             }
         }
         return bizShipWorkPlan;
+    }
+    @Override
+    public List<AlgShipWorkShift> getAlgShipWorkShift(List<AlgShipWorkShiftTemp> tempList) {
+        List<AlgShipWorkShift> shiftList = new ArrayList<>();
+        tempList.forEach(item -> {
+            AlgShipWorkShift algShipWorkShift = new AlgShipWorkShift();
+            Field[] fields =  ReflectUtil.getFields(AlgShipWorkShiftTemp.class);
+            for(Field field : fields){
+                if("serialVersionUID".equals(field.getName())){
+                    continue;
+                }
+                Object val = ReflectUtil.getFieldValue(item, field);
+                if(null != val){
+                    ReflectUtil.setFieldValue(algShipWorkShift, field.getName(), val);
+                }
+            }
+            shiftList.add(algShipWorkShift);
+        });
+        return shiftList;
     }
     @Override
     @Transactional

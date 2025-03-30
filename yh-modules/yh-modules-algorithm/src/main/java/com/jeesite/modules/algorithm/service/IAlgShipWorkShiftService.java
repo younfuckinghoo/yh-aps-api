@@ -2,6 +2,9 @@ package com.jeesite.modules.algorithm.service;
 
 import com.jeesite.modules.algorithm.entity.AlgShipWorkShift;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.jeesite.modules.algorithm.entity.AlgShipWorkShiftTemp;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @since 2025-03-17
  */
 public interface IAlgShipWorkShiftService extends IService<AlgShipWorkShift> {
-
+    /**
+     * 获取列表
+     * @param algShipWorkShift
+     * @return
+     */
+    List<AlgShipWorkShift> queryList(AlgShipWorkShift algShipWorkShift);
 }
